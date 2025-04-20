@@ -11,23 +11,32 @@ import time
 import requests
 import threading
 import signal
+import platform
 from io import BytesIO
 from PIL import Image
 
-try:
-    import gpiod
-    import gpiodevice
-    from gpiod.line import Bias, Direction, Edge
-    BUTTON_SUPPORT = True
-except ImportError:
-    BUTTON_SUPPORT = False
-    print("Warning: gpiod not available. Button support disabled.")
+# Check if we're on macOS
+IS_MACOS = platform.system() == "Darwin"
 
-try:
-    from inky.auto import auto
-except ImportError:
-    print("Please install the Inky library: pip install inky")
-    sys.exit(1)
+# Only try to import hardware-dependent libraries if not on macOS
+if not IS_MACOS:
+    try:
+        import gpiod
+        import gpiodevice
+        from gpiod.line import Bias, Direction, Edge
+        BUTTON_SUPPORT = True
+    except ImportError:
+        BUTTON_SUPPORT = False
+        print("Warning: gpiod not available. Button support disabled.")
+
+    try:
+        from inky.auto import auto
+    except ImportError:
+        print("Please install the Inky library: pip install inky")
+        sys.exit(1)
+else:
+    BUTTON_SUPPORT = False
+    print("Running on macOS: Hardware-dependent libraries disabled.")
 
 # Get the path to the script's directory
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -43,6 +52,30 @@ LABELS = ["A", "B", "C", "D"]
 # B: Next image
 # C: Rotate left (counter-clockwise)
 # D: Rotate right (clockwise)
+
+class InkyMock:
+    """Simple mock Inky display for development on non-Pi systems."""
+    def __init__(self, width=600, height=448):
+        """Initialize with default Inky Impression 5.7" dimensions."""
+        self.width = width
+        self.height = height
+        self.WHITE = 1
+        self.image = None
+        print(f"Mock Inky display created with size: {width}x{height}")
+    
+    def set_border(self, color):
+        """Mock set_border method."""
+        pass
+    
+    def set_image(self, image, saturation=0.5):
+        """Mock set_image method."""
+        self.image = image
+        # Display the image using PIL's show method
+        self.image.show()
+    
+    def show(self):
+        """Mock show method."""
+        print("Display updated (mock)")
 
 class GalleryViewer:
     """Class to handle gallery viewing with button controls."""
@@ -64,7 +97,7 @@ class GalleryViewer:
         self.debounce_time = 0.5  # seconds
         
         # Set up buttons if available and not in simulation mode
-        if BUTTON_SUPPORT and not simulation:
+        if BUTTON_SUPPORT and not simulation and not IS_MACOS:
             self.setup_buttons()
     
     def setup_buttons(self):
@@ -267,6 +300,10 @@ def get_args():
                       help='Simulate display without actual hardware')
     parser.add_argument('--verbose', action='store_true', 
                       help='Enable verbose output')
+    parser.add_argument('--width', type=int, default=600,
+                      help='Display width for macOS/simulation mode')
+    parser.add_argument('--height', type=int, default=448,
+                      help='Display height for macOS/simulation mode')
     
     return parser.parse_args()
 
@@ -382,27 +419,40 @@ def main():
         if verbose:
             print(f"Using sample image: {sample_file}")
     
-    # Set up display
+    # Set up display based on platform and arguments
     try:
-        if args.simulation:
-            # Use mock display with 7-color simulation
+        if IS_MACOS:
+            # On macOS, always use the simple mock display
+            print("Running on macOS: Using simple mock display")
+            inky_display = InkyMock(width=args.width, height=args.height)
+            # Force simulation mode to be True
+            args.simulation = True
+        elif args.simulation:
+            # On other platforms with simulation requested
             print("Running in simulation mode")
-            from inky.mock import InkyMockImpression
-            inky_display = InkyMockImpression()
-            import atexit
-            atexit.register(inky_display.wait_for_window_close)
+            try:
+                # Try to use the Inky mock library if available
+                from inky.mock import InkyMockImpression
+                inky_display = InkyMockImpression()
+                import atexit
+                atexit.register(inky_display.wait_for_window_close)
+            except ImportError:
+                # Fall back to simple mock if Inky mock is not available
+                print("Inky mock library not available, using simple mock")
+                inky_display = InkyMock(width=args.width, height=args.height)
         else:
-            # Use actual display
+            # Use actual hardware display
             inky_display = auto()
             if hasattr(inky_display, 'set_border'):
                 inky_display.set_border(inky_display.WHITE)
     except Exception as e:
         print(f"Error initializing display: {e}")
-        print("If using hardware, ensure I2C and SPI are enabled with:")
-        print("  sudo raspi-config nonint do_i2c 0")
-        print("  sudo raspi-config nonint do_spi 0")
-        print("  sudo nano /boot/firmware/config.txt (add 'dtoverlay=spi0-0cs')")
-        print("Or try with --simulation to test without hardware")
+        if not IS_MACOS:
+            print("If using hardware, ensure I2C and SPI are enabled with:")
+            print("  sudo raspi-config nonint do_i2c 0")
+            print("  sudo raspi-config nonint do_spi 0")
+            print("  sudo nano /boot/firmware/config.txt (add 'dtoverlay=spi0-0cs')")
+            print("Or try with --simulation to test without hardware")
         sys.exit(1)
     
     image_urls = []
@@ -438,7 +488,7 @@ def main():
         
         # For simulation mode or when using gallery, 
         # we need to keep the main thread running
-        if args.simulation or args.gallery_file:
+        if args.simulation or args.gallery_file or IS_MACOS:
             print("Press Ctrl+C to exit")
             while True:
                 time.sleep(1)
