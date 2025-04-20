@@ -1,0 +1,10 @@
+# Sample gallery of images for Inky Image Viewer
+# Each line should contain a URL to an image
+# Lines starting with # are treated as comments and ignored
+# Empty lines are also ignored
+
+# Some example images
+https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Raspberry_Pi_Logo.svg/1200px-Raspberry_Pi_Logo.svg.png
+https://picsum.photos/800/600
+https://picsum.photos/600/800
+https://picsum.photos/600/600
