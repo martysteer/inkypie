@@ -1,197 +1,187 @@
 #!/usr/bin/env python3
-# inky_image_viewer.py - Display images on Inky with button controls
-
+"""
+Inky Image Viewer - Display images on Inky displays from local files or URLs.
+For the 7-color Inky Impression display.
+"""
+import sys
 import os
 import argparse
 import time
-import urllib.request
+import requests
 from io import BytesIO
 from PIL import Image
-import RPi.GPIO as GPIO
-from inky.auto import auto
+try:
+    from inky.auto import auto
+except ImportError:
+    print("Please install the Inky library: pip install inky")
+    sys.exit(1)
 
-# Optional imports for extended functionality
-# Uncomment as needed for additional features
-# try:
-#     import requests  # More robust URL handling
-#     USE_REQUESTS = True
-# except ImportError:
-#     USE_REQUESTS = False
-#
-# try:
-#     from PIL import ImageDraw, ImageFont  # For text overlay feature
-#     TEXT_OVERLAY_AVAILABLE = True
-# except ImportError:
-#     TEXT_OVERLAY_AVAILABLE = False
+# Get the path to the script's directory
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-# Button pins (adjust if your buttons are connected differently)
-BUTTONS = [5, 6, 16, 24]  # Typical button pins for Inky pHAT/wHAT
-NAMES = ["A", "B", "C", "D"]  # Names for the buttons
+def get_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='Display an image on Inky.')
+    source_group = parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument('--file', type=str, help='Path to local image file')
+    source_group.add_argument('--url', type=str, help='URL of image to download')
+    parser.add_argument('--rotate', type=int, choices=[0, 90, 180, 270], default=0, 
+                      help='Rotate image (degrees)')
+    parser.add_argument('--saturation', type=float, default=0.5, 
+                      help='Saturation for 7-color displays (0.0 to 1.0)')
+    parser.add_argument('--simulation', action='store_true', 
+                      help='Simulate display without actual hardware')
+    parser.add_argument('--sample', type=int, default=None, 
+                      help='Use sample image (1-3) from samples directory')
+    parser.add_argument('--verbose', action='store_true', 
+                      help='Enable verbose output')
+    return parser.parse_args()
 
-# Display settings
-scale = 1.0
-rotation = 0
-preserve_aspect_ratio = True
-
-# Get the Inky display
-inky_display = auto()
-WIDTH, HEIGHT = inky_display.resolution
-
-def setup_gpio():
-    """Set up GPIO for button inputs."""
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
+def load_image_from_url(url, verbose=False):
+    """Load an image from a URL."""
+    if verbose:
+        print(f"Downloading image from: {url}")
     
-    for pin in BUTTONS:
-        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        
-    print("GPIO set up for buttons.")
-
-def download_image(url):
-    """Download an image from a URL or load from local file."""
     try:
-        if os.path.isfile(url):  # Local file
-            return Image.open(url)
-        
-        # Remote URL
-        # Use requests if available for better error handling
-        if 'USE_REQUESTS' in globals() and USE_REQUESTS:
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            return Image.open(BytesIO(response.content))
-        else:
-            # Fallback to urllib
-            response = urllib.request.urlopen(url)
-            image_data = response.read()
-            return Image.open(BytesIO(image_data))
-    except Exception as e:
-        print(f"Error loading image: {e}")
-        exit(1)
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()  # Raise exception for 4XX/5XX responses
+        return Image.open(BytesIO(response.content))
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading image: {e}")
+        sys.exit(1)
+    except IOError as e:
+        print(f"Error opening image: {e}")
+        sys.exit(1)
 
-def process_image(image):
-    """Process and prepare image for display on Inky."""
-    # Resize image based on current settings
-    img_width, img_height = image.size
+def load_image_from_file(path, verbose=False):
+    """Load an image from a file."""
+    if verbose:
+        print(f"Loading image from: {path}")
     
-    if preserve_aspect_ratio:
-        # Calculate aspect-preserved size
-        ratio = min(WIDTH / img_width, HEIGHT / img_height) * scale
-        new_width = int(img_width * ratio)
-        new_height = int(img_height * ratio)
+    try:
+        return Image.open(path)
+    except IOError as e:
+        print(f"Error opening image: {e}")
+        sys.exit(1)
+
+def prepare_image(image, inky_display, rotation=0, saturation=0.5, verbose=False):
+    """Prepare image for display on Inky."""
+    if verbose:
+        print(f"Original image size: {image.width}x{image.height}")
+        print(f"Display size: {inky_display.width}x{inky_display.height}")
+    
+    # Rotate image if needed
+    if rotation:
+        image = image.rotate(rotation, expand=True)
+    
+    # Resize image to fit display while maintaining aspect ratio
+    display_width, display_height = inky_display.width, inky_display.height
+    image_ratio = image.width / image.height
+    display_ratio = display_width / display_height
+    
+    if image_ratio > display_ratio:
+        # Image is wider than display
+        new_width = display_width
+        new_height = int(display_width / image_ratio)
     else:
-        # Scale directly
-        new_width = int(WIDTH * scale)
-        new_height = int(HEIGHT * scale)
+        # Image is taller than display
+        new_height = display_height
+        new_width = int(display_height * image_ratio)
     
-    # Resize the image
-    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+    # Resize image
+    image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
     
-    # Create a blank white image of the Inky's dimensions
-    final_image = Image.new("RGBA", (WIDTH, HEIGHT), (255, 255, 255, 255))
+    if verbose:
+        print(f"Resized image: {image.width}x{image.height}")
     
-    # Calculate paste position (center)
-    paste_x = (WIDTH - new_width) // 2
-    paste_y = (HEIGHT - new_height) // 2
+    # Create a blank canvas the size of the display
+    new_image = Image.new("RGBA", (display_width, display_height), (255, 255, 255, 255))
     
-    # Paste resized image onto blank background
-    final_image.paste(resized_image, (paste_x, paste_y))
+    # Calculate position to center image
+    x = (display_width - new_width) // 2
+    y = (display_height - new_height) // 2
     
-    # Rotate if needed
-    if rotation != 0:
-        final_image = final_image.rotate(rotation, expand=False)
+    # Paste the image
+    new_image.paste(image, (x, y))
     
-    # Convert to palette mode for Inky
-    if hasattr(inky_display, 'set_image'):
-        # For Inky Impression (7-color)
-        if hasattr(inky_display, 'DESATURATED_PALETTE'):
-            return final_image
-        # For standard Inky
-        else:
-            return final_image.convert("RGB").convert("P", palette=Image.ADAPTIVE, colors=3)
-    
-    return final_image.convert("RGB").convert("P", palette=Image.ADAPTIVE, colors=3)
-
-def update_display(image):
-    """Update the Inky display with the current image."""
-    try:
-        processed_image = process_image(image)
-        
-        # Check if we have a 7-color Inky Impression
-        if hasattr(inky_display, 'set_image') and hasattr(inky_display, 'DESATURATED_PALETTE'):
-            inky_display.set_image(processed_image, saturation=0.5)
-        else:
-            inky_display.set_image(processed_image)
-            
-        inky_display.show()
-        print("Display updated.")
-    except Exception as e:
-        print(f"Error updating display: {e}")
-
-def handle_button_press(channel, image):
-    """Handle button presses to modify display settings."""
-    global scale, rotation, preserve_aspect_ratio
-    
-    index = BUTTONS.index(channel)
-    name = NAMES[index]
-    
-    if name == "A":  # Scale up
-        scale = min(scale + 0.1, 2.0)
-        print(f"Scale increased to: {scale:.1f}")
-    elif name == "B":  # Scale down
-        scale = max(scale - 0.1, 0.1)
-        print(f"Scale decreased to: {scale:.1f}")
-    elif name == "C":  # Rotate
-        rotation = (rotation + 90) % 360
-        print(f"Rotation set to: {rotation}°")
-    elif name == "D":  # Toggle aspect ratio
-        preserve_aspect_ratio = not preserve_aspect_ratio
-        print(f"Preserve aspect ratio: {preserve_aspect_ratio}")
-    
-    update_display(image)
-    time.sleep(0.2)  # Debounce
+    # Convert to RGB for compatibility
+    return new_image.convert("RGB")
 
 def main():
-    """Main function to run the image viewer."""
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Display an image from URL on Inky")
-    parser.add_argument("--url", required=True, help="URL or path to the image file")
-    args = parser.parse_args()
+    args = get_args()
+    verbose = args.verbose
     
-    # Download and prepare the image
-    print(f"Loading image from: {args.url}")
-    original_image = download_image(args.url)
+    # Handle sample images
+    if args.sample is not None:
+        sample_num = args.sample
+        sample_file = os.path.join(SCRIPT_DIR, "samples", f"sample{sample_num}.jpg")
+        if not os.path.exists(sample_file):
+            print(f"Sample image {sample_num} not found")
+            sys.exit(1)
+        args.file = sample_file
+        if verbose:
+            print(f"Using sample image: {sample_file}")
     
-    # Set up GPIO for buttons
-    setup_gpio()
-    
-    # Display the initial image
-    update_display(original_image)
-    
-    # Set up button callbacks
-    # Using a function factory to avoid lambda closure issues
-    def make_callback(pin_param, img):
-        return lambda channel: handle_button_press(pin_param, img)
-        
-    for pin in BUTTONS:
-        GPIO.add_event_detect(pin, GPIO.FALLING, 
-                             callback=make_callback(pin, original_image),
-                             bouncetime=200)
-    
-    print("\nControls:")
-    print("Button A: Increase scale")
-    print("Button B: Decrease scale")
-    print("Button C: Rotate 90°")
-    print("Button D: Toggle aspect ratio preservation")
-    print("\nPress CTRL+C to exit.")
-    
-    # Keep the program running
+    # Set up display
     try:
-        while True:
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        print("\nExiting...")
-    finally:
-        GPIO.cleanup()
+        if args.simulation:
+            # Use mock display with 7-color simulation
+            print("Running in simulation mode")
+            from inky.mock import InkyMockImpression
+            inky_display = InkyMockImpression()
+            import atexit
+            atexit.register(inky_display.wait_for_window_close)
+        else:
+            # Use actual display
+            inky_display = auto()
+            if hasattr(inky_display, 'set_border'):
+                inky_display.set_border(inky_display.WHITE)
+    except Exception as e:
+        print(f"Error initializing display: {e}")
+        print("If using hardware, ensure I2C and SPI are enabled with:")
+        print("  sudo raspi-config nonint do_i2c 0")
+        print("  sudo raspi-config nonint do_spi 0")
+        print("  sudo nano /boot/firmware/config.txt (add 'dtoverlay=spi0-0cs')")
+        print("Or try with --simulation to test without hardware")
+        sys.exit(1)
+    
+    # Load image
+    if args.url:
+        image = load_image_from_url(args.url, verbose)
+    elif args.file:
+        image = load_image_from_file(args.file, verbose)
+    
+    # Prepare and display image
+    processed_image = prepare_image(
+        image, 
+        inky_display, 
+        rotation=args.rotate,
+        saturation=args.saturation,
+        verbose=verbose
+    )
+    
+    if verbose:
+        print("Processing image for display...")
+    
+    # Different display types have different methods
+    if hasattr(inky_display, 'set_image'):
+        if 'saturation' in inky_display.set_image.__code__.co_varnames:
+            # For 7-color displays that support saturation
+            inky_display.set_image(processed_image, saturation=args.saturation)
+        else:
+            # For other displays
+            inky_display.set_image(processed_image)
+    
+    if verbose:
+        print("Updating display...")
+    
+    # Update the display
+    start_time = time.time()
+    inky_display.show()
+    elapsed = time.time() - start_time
+    
+    if verbose:
+        print(f"Display updated in {elapsed:.2f} seconds")
 
 if __name__ == "__main__":
     main()

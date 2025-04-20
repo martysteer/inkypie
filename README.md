@@ -1,124 +1,74 @@
-# InkyPie - Inky Display Image Viewer
+# InkyPie
 
-A simple Python script for displaying and manipulating images on Inky e-ink displays using the side buttons for control.
+A collection of improved utilities for Pimoroni Inky e-paper displays.
 
-## Features
+## Inky Image Viewer
 
-- Display images from local files or URLs
-- Control image scale, rotation, and aspect ratio via buttons
-- Automatic detection of display type
-- Support for all Inky display types (pHAT, wHAT, and Impression)
+This script allows you to display images on your Inky display from either local files or URLs.
 
-## Requirements
+### Features
 
-- Raspberry Pi with an Inky display connected
-- Python 3
-- Inky library and RPi.GPIO
-- PIL/Pillow for image processing
+- Support for URL-based images (downloads from the web)
+- Automatic image resizing and centering on the display
+- Support for various display types, with special handling for 7-color displays
+- Simulation mode for testing without hardware
+- Sample image support
+- Rotation options
+- Adjustable saturation for 7-color displays
 
-## Installation
+### Installation
 
-1. Clone this repository:
+Make sure you have the required dependencies:
+
 ```bash
-git clone https://github.com/yourusername/inkypie.git
-cd inkypie
+pip install inky pillow requests
 ```
 
-2. Install dependencies:
-```bash
-pip3 install inky[rpi] pillow
-```
+### Usage
 
-3. Make the script executable:
-```bash
-chmod +x inky_image_viewer.py
-```
-
-## Usage
-
-Run the script with a URL or path to an image:
+Basic usage:
 
 ```bash
+# Display an image from a URL
 python3 inky_image_viewer.py --url https://example.com/image.jpg
+
+# Display a local image file
+python3 inky_image_viewer.py --file /path/to/image.jpg
+
+# Use simulation mode (no hardware required)
+python3 inky_image_viewer.py --url https://example.com/image.jpg --simulation
+
+# Rotate the image
+python3 inky_image_viewer.py --url https://example.com/image.jpg --rotate 90
+
+# Adjust saturation (for 7-color displays, 0.0 to 1.0)
+python3 inky_image_viewer.py --url https://example.com/image.jpg --saturation 0.7
+
+# Display a sample image (if available in the samples directory)
+python3 inky_image_viewer.py --sample 1
+
+# Enable verbose output to see details of the process
+python3 inky_image_viewer.py --url https://example.com/image.jpg --verbose
 ```
 
-Or with a local file:
+### Troubleshooting
 
-```bash
-python3 inky_image_viewer.py --url /path/to/your/image.jpg
-```
+If you encounter issues with hardware detection:
 
-### Button Controls
+1. Make sure I2C and SPI are enabled:
+   ```bash
+   sudo raspi-config nonint do_i2c 0
+   sudo raspi-config nonint do_spi 0
+   ```
 
-- **Button A**: Increase scale
-- **Button B**: Decrease scale  
-- **Button C**: Rotate by 90°
-- **Button D**: Toggle aspect ratio preservation
+2. Add the following to `/boot/firmware/config.txt`:
+   ```
+   dtoverlay=spi0-0cs
+   ```
 
-Press CTRL+C to exit.
+3. Try using the `--simulation` flag to test without hardware.
 
-## Customization
+### Adding Sample Images
 
-You can modify the `BUTTONS` list in the script if your buttons are connected to different GPIO pins.
-
-## Git Project Integration
-
-This project is designed to work with Git for version control. Here's how to manage it:
-
-### Initial Setup
-
-If you've just created this project, initialize a git repository:
-
-```bash
-git init
-git add inky_image_viewer.py README.md
-git commit -m "Initial commit with image viewer script"
-```
-
-### Connecting to GitHub
-
-1. Create a repository on GitHub
-2. Connect your local repository:
-
-```bash
-git remote add origin https://github.com/yourusername/inkypie.git
-git branch -M main
-git push -u origin main
-```
-
-### Workflow for Updates
-
-When making changes:
-
-1. Edit your files
-2. Test your changes
-3. Stage and commit:
-```bash
-git add .
-git commit -m "Description of changes"
-git push
-```
-
-### Synchronizing with Raspberry Pi
-
-To get your code onto your Raspberry Pi:
-
-1. On your Raspberry Pi:
-```bash
-git clone https://github.com/yourusername/inkypie.git
-```
-
-2. For future updates:
-```bash
-cd inkypie
-git pull
-```
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Acknowledgments
-
-- Pimoroni for their excellent Inky library
-- The Raspberry Pi community
+Place sample images in the `samples` directory with names like `sample1.jpg`, `sample2.jpg`, etc.
+Then use `--sample 1` to display the first sample image.

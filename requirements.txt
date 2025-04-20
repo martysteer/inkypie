@@ -8,11 +8,11 @@ requests>=2.27.0
 beautifulsoup4>=4.10.0
 
 # Font packages for improved typography
-font-source-sans-pro>=1.0.0
-font-source-serif-pro>=1.0.0
-font-fredoka-one>=1.0.0
-font-hanken-grotesk>=1.0.0
-font-intuitive>=1.0.0
+# font-source-sans-pro>=1.0.0
+# font-source-serif-pro>=1.0.0
+# font-fredoka-one>=1.0.0
+# font-hanken-grotesk>=1.0.0
+# font-intuitive>=1.0.0
 
 # Additional packages for future features
 geocoder>=1.38.0
