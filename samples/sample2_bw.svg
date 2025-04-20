@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="white"/>
+  
+  <!-- Grid pattern for e-ink displays -->
+  <g stroke="black" stroke-width="1" fill="none">
+    <line x1="0" y1="50" x2="400" y2="50" stroke-dasharray="2 2"/>
+    <line x1="0" y1="100" x2="400" y2="100" stroke-dasharray="2 2"/>
+    <line x1="0" y1="150" x2="400" y2="150" stroke-dasharray="2 2"/>
+    <line x1="0" y1="200" x2="400" y2="200" stroke-dasharray="2 2"/>
+    <line x1="0" y1="250" x2="400" y2="250" stroke-dasharray="2 2"/>
+    
+    <line x1="50" y1="0" x2="50" y2="300" stroke-dasharray="2 2"/>
+    <line x1="100" y1="0" x2="100" y2="300" stroke-dasharray="2 2"/>
+    <line x1="150" y1="0" x2="150" y2="300" stroke-dasharray="2 2"/>
+    <line x1="200" y1="0" x2="200" y2="300" stroke-dasharray="2 2"/>
+    <line x1="250" y1="0" x2="250" y2="300" stroke-dasharray="2 2"/>
+    <line x1="300" y1="0" x2="300" y2="300" stroke-dasharray="2 2"/>
+    <line x1="350" y1="0" x2="350" y2="300" stroke-dasharray="2 2"/>
+  </g>
+  
+  <!-- High contrast elements perfect for e-ink -->
+  <circle cx="200" cy="120" r="70" fill="black"/>
+  <circle cx="200" cy="120" r="50" fill="white"/>
+  <circle cx="200" cy="120" r="30" fill="black"/>
+  
+  <!-- Text -->
+  <text x="200" y="220" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="black">E-Ink Optimized</text>
+  <text x="200" y="250" font-family="Arial" font-size="16" text-anchor="middle" fill="black">High Contrast Sample</text>
+  
+  <!-- Screen border -->
+  <rect x="10" y="10" width="380" height="280" stroke="black" stroke-width="3" fill="none"/>
+</svg>

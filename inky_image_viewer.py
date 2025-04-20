@@ -10,6 +10,20 @@ from PIL import Image
 import RPi.GPIO as GPIO
 from inky.auto import auto
 
+# Optional imports for extended functionality
+# Uncomment as needed for additional features
+# try:
+#     import requests  # More robust URL handling
+#     USE_REQUESTS = True
+# except ImportError:
+#     USE_REQUESTS = False
+#
+# try:
+#     from PIL import ImageDraw, ImageFont  # For text overlay feature
+#     TEXT_OVERLAY_AVAILABLE = True
+# except ImportError:
+#     TEXT_OVERLAY_AVAILABLE = False
+
 # Button pins (adjust if your buttons are connected differently)
 BUTTONS = [5, 6, 16, 24]  # Typical button pins for Inky pHAT/wHAT
 NAMES = ["A", "B", "C", "D"]  # Names for the buttons
@@ -34,15 +48,22 @@ def setup_gpio():
     print("GPIO set up for buttons.")
 
 def download_image(url):
-    """Download an image from a URL."""
+    """Download an image from a URL or load from local file."""
     try:
         if os.path.isfile(url):  # Local file
             return Image.open(url)
         
         # Remote URL
-        response = urllib.request.urlopen(url)
-        image_data = response.read()
-        return Image.open(BytesIO(image_data))
+        # Use requests if available for better error handling
+        if 'USE_REQUESTS' in globals() and USE_REQUESTS:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            return Image.open(BytesIO(response.content))
+        else:
+            # Fallback to urllib
+            response = urllib.request.urlopen(url)
+            image_data = response.read()
+            return Image.open(BytesIO(image_data))
     except Exception as e:
         print(f"Error loading image: {e}")
         exit(1)
@@ -147,9 +168,13 @@ def main():
     update_display(original_image)
     
     # Set up button callbacks
+    # Using a function factory to avoid lambda closure issues
+    def make_callback(pin_param, img):
+        return lambda channel: handle_button_press(pin_param, img)
+        
     for pin in BUTTONS:
         GPIO.add_event_detect(pin, GPIO.FALLING, 
-                             callback=lambda channel: handle_button_press(channel, original_image),
+                             callback=make_callback(pin, original_image),
                              bouncetime=200)
     
     print("\nControls:")

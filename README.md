@@ -1,186 +1,124 @@
-# Inky
+# InkyPie - Inky Display Image Viewer
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/pimoroni/inky/test.yml?branch=main)](https://github.com/pimoroni/inky/actions/workflows/test.yml)
-[![Coverage Status](https://coveralls.io/repos/github/pimoroni/inky/badge.svg?branch=main)](https://coveralls.io/github/pimoroni/inky?branch=main)
-[![PyPi Package](https://img.shields.io/pypi/v/inky.svg)](https://pypi.python.org/pypi/inky)
-[![Python Versions](https://img.shields.io/pypi/pyversions/inky.svg)](https://pypi.python.org/pypi/inky)
+A simple Python script for displaying and manipulating images on Inky e-ink displays using the side buttons for control.
 
-Python library for [Inky pHAT](https://shop.pimoroni.com/products/inky-phat), [Inky wHAT](https://shop.pimoroni.com/products/inky-what) and [Inky Impression](https://shop.pimoroni.com/?q=inky+impression) e-paper displays for Raspberry Pi.
+## Features
 
-### Inky pHAT
+- Display images from local files or URLs
+- Control image scale, rotation, and aspect ratio via buttons
+- Automatic detection of display type
+- Support for all Inky display types (pHAT, wHAT, and Impression)
 
-[Inky pHAT](https://shop.pimoroni.com/products/inky-phat) is a 250x122 pixel e-paper display, available in red/black/white, yellow/black/white and black/white. It's great for nametags and displaying very low frequency information such as a daily calendar or weather overview.
+## Requirements
 
-
-### Inky wHAT
-
-[Inky wHAT](https://shop.pimoroni.com/products/inky-what) is a 400x300 pixel e-paper display available in red/black/white, yellow/black/white and black/white. It's got tons of resolution for detailed daily to-do lists, multi-day weather forecasts, bus timetables and more.
-
-### Inky Impression
-
-[Inky Impression](https://shop.pimoroni.com/?q=inky+impression) is our line of glorious 7 colour eInk displays, available in [4"](https://shop.pimoroni.com/products/inky-impression-4) (640 x 400 pixel) [5.7"](https://shop.pimoroni.com/products/inky-impression-5-7) (600 x 448 pixel) and [7.3"](https://shop.pimoroni.com/products/inky-impression-7-3) (800 x 480 pixel) flavours. They're packed with strong colours and perfect for displaying striking graphics or lots of data.
+- Raspberry Pi with an Inky display connected
+- Python 3
+- Inky library and RPi.GPIO
+- PIL/Pillow for image processing
 
 ## Installation
 
-We'd recommend using this library with Raspberry Pi OS Bookworm or later. It requires Python ≥3.7.
-
-### Full install (recommended):
-
-We've created an easy installation script that will install all pre-requisites and get you up and running with minimal efforts. To run it, fire up Terminal which you'll find in Menu -> Accessories -> Terminal
-on your Raspberry Pi desktop, as illustrated below:
-
-![Finding the terminal](http://get.pimoroni.com/resources/github-repo-terminal.png)
-
-In the new terminal window type the commands exactly as it appears below (check for typos) and follow the on-screen instructions:
-
+1. Clone this repository:
 ```bash
-git clone https://github.com/pimoroni/inky
-cd inky
-./install.sh
+git clone https://github.com/yourusername/inkypie.git
+cd inkypie
 ```
 
-**Note** Libraries will be installed in the "pimoroni" virtual environment, you will need to activate it to run examples:
-
-```
-source ~/.virtualenvs/pimoroni/bin/activate
-```
-
-### Development:
-
-If you want to contribute, or like living on the edge of your seat by having the latest code, you can install the development version like so:
-
+2. Install dependencies:
 ```bash
-git clone https://github.com/pimoroni/inky
-cd inky
-./install.sh --unstable
+pip3 install inky[rpi] pillow
 ```
 
-### Install stable library from PyPi and configure manually
-
-* Set up a virtual environment: `python3 -m venv --system-site-packages $HOME/.virtualenvs/pimoroni`
-* Switch to the virtual environment: `source ~/.virtualenvs/pimoroni/bin/activate`
-* Install the library: `pip install inky`
-
-This will not make any configuration changes, so you may also need to enable:
-
-* i2c: `sudo raspi-config nonint do_i2c 0`
-* spi: `sudo raspi-config nonint do_spi 0`
-
-You can optionally run `sudo raspi-config` or the graphical Raspberry Pi Configuration UI to enable interfaces.
-
-Additionally you may need to disable SPI's chip-select to avoid the error:
-
+3. Make the script executable:
+```bash
+chmod +x inky_image_viewer.py
 ```
-Woah there, some pins we need are in use!
-  ⚠️   Chip Select: (line 8, GPIO8) currently claimed by spi0 CS0
-```
-
-This requires the addition of `dtoverlay=spi0-0cs` to `/boot/firmware/config.txt`.
 
 ## Usage
 
-The library should be run with Python 3.
+Run the script with a URL or path to an image:
 
-### Auto Setup
-
-Inky can try to automatically identify your board (from the information stored on its EEPROM) and set up accordingly. This is the easiest way to work with recent Inky displays.
-
-```python
-from inky.auto import auto
-display = auto()
+```bash
+python3 inky_image_viewer.py --url https://example.com/image.jpg
 ```
 
-You can then get the colour and resolution from the board:
+Or with a local file:
 
-```python
-display.colour
-display.resolution
+```bash
+python3 inky_image_viewer.py --url /path/to/your/image.jpg
 ```
 
-### Manual Setup
+### Button Controls
 
-If you have an older Inky without an EEPROM, you can specify the type manually. The Inky library contains modules for both the pHAT and wHAT, load the Inky pHAT one as follows:
+- **Button A**: Increase scale
+- **Button B**: Decrease scale  
+- **Button C**: Rotate by 90°
+- **Button D**: Toggle aspect ratio preservation
 
-```python
-from inky import InkyPHAT
+Press CTRL+C to exit.
+
+## Customization
+
+You can modify the `BUTTONS` list in the script if your buttons are connected to different GPIO pins.
+
+## Git Project Integration
+
+This project is designed to work with Git for version control. Here's how to manage it:
+
+### Initial Setup
+
+If you've just created this project, initialize a git repository:
+
+```bash
+git init
+git add inky_image_viewer.py README.md
+git commit -m "Initial commit with image viewer script"
 ```
 
-You'll then need to pick your colour, one of 'red', 'yellow' or 'black' and instantiate the class:
+### Connecting to GitHub
 
-```python
-display = InkyPHAT('red')
+1. Create a repository on GitHub
+2. Connect your local repository:
+
+```bash
+git remote add origin https://github.com/yourusername/inkypie.git
+git branch -M main
+git push -u origin main
 ```
 
-If you're using the wHAT you'll need to load the InkyWHAT class from the Inky library like so:
+### Workflow for Updates
 
-```python
-from inky import InkyWHAT
-display = InkyWHAT('red')
+When making changes:
+
+1. Edit your files
+2. Test your changes
+3. Stage and commit:
+```bash
+git add .
+git commit -m "Description of changes"
+git push
 ```
 
-Once you've initialised Inky, there are only three methods you need to be concerned with:
+### Synchronizing with Raspberry Pi
 
-### Set Image
+To get your code onto your Raspberry Pi:
 
-Set a PIL image, numpy array or list to Inky's internal buffer. The image dimensions should match the dimensions of the pHAT or wHAT you're using.
-
-```python
-display.set_image(image)
+1. On your Raspberry Pi:
+```bash
+git clone https://github.com/yourusername/inkypie.git
 ```
 
-You should use `PIL` to create an image. `PIL` provides an `ImageDraw` module which allow you to draw text, lines and shapes over your image. See: https://pillow.readthedocs.io/en/stable/reference/ImageDraw.html
-
-### Set Border
-
-Set the border colour of you pHAT or wHAT.
-
-```python
-display.set_border(colour)
+2. For future updates:
+```bash
+cd inkypie
+git pull
 ```
 
-`colour` should be one of `inky.RED`, `inky.YELLOW`, `inky.WHITE` or `inky.BLACK` with available colours depending on your display type.
+## License
 
-### Update The Display
+MIT License - See LICENSE file for details
 
-Once you've prepared and set your image, and chosen a border colour, you can update your e-ink display with:
+## Acknowledgments
 
-```python
-display.show()
-```
-
-## Migrating
-
-If you're migrating code from the old `inkyphat` library you'll find that much of the drawing and image manipulation functions have been removed from Inky. These functions were always supplied by PIL, and the recommended approach is to use PIL to create and prepare your image before setting it to Inky with `set_image()`.
-
-## Troubleshooting
-
-### `ModuleNotFoundError: No module named 'inky'`
-
-Assuming you've run `./install.sh` already, make sure you have your virtual environment active. If you're using the one set up by our installer, that looks like this:
-
-```
-source ~/.virtualenvs/pimoroni/bin/activate
-```
-
-### `ModuleNotFoundError: No module named 'font_hanken_grotesk'`
-
-You're missing some dependencies that the example code needs to run. A list of dependencies can be found [here](https://github.com/pimoroni/inky/blob/main/requirements-examples.txt), and you can install them like this (make sure you have your virtual environment active):
-
-```
-pip install font-hanken-grotesk
-```
-
-### `RuntimeError: No EEPROM detected! You must manually initialise your Inky board.`
-
-Check that I2C and SPI are enabled. You can do this using `sudo raspi-config` - they're under 'Interfacing Options'. You may need to reboot your Pi after you've enabled them (`sudo reboot`).
-
-### `Chip Select: (line 8, GPIO8) currently claimed by spi0 CS0`
-
-Check you have the following line present in your /boot/firmware/config.txt:
-
-```
-dtoverlay=spi0-0cs
-```
-
-You can edit the config file using `sudo nano boot/firmware/config.txt`, and it's Ctrl-X, then 'Y' and Enter to save your changes. You'll need to reboot your Pi after you've made this change (`sudo reboot`)
-
+- Pimoroni for their excellent Inky library
+- The Raspberry Pi community
