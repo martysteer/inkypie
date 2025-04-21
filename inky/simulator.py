@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from PIL import Image
 from .base import BaseInky
+from .platform import is_raspberry_pi
 
 # Try to import pygame, but don't fail if it's not available
 try:
@@ -18,20 +19,24 @@ except ImportError:
 class InkySimulator(BaseInky):
     """Pygame-based simulator for Inky displays."""
 
-    def __init__(self, resolution=(600, 448), colour="multi", **kwargs):
+    def __init__(self, colour="multi", **kwargs):
         """Initialize an Inky Display Simulator.
 
-        :param resolution: (width, height) in pixels, default: (600, 448)
         :param colour: Display color capability ("multi", "red", "black", "yellow")
+        :param kwargs: Additional keyword arguments including resolution
         """
-        super().__init__(resolution, colour)
+        # Check for resolution in kwargs
+        resolution = kwargs.pop('resolution', (600, 448))
+        
+        # Call parent constructor
+        super().__init__(resolution, colour, **kwargs)
         
         # If pygame is not available, fall back to simple simulator
         if not PYGAME_AVAILABLE:
             print("Falling back to simple simulator...")
             self._simple_simulator = InkySimpleSimulator(
-                resolution=resolution, 
                 colour=colour, 
+                resolution=resolution,
                 **kwargs
             )
             return
@@ -83,13 +88,16 @@ class InkySimulator(BaseInky):
         self._display_thread.start()
         
         # Define key mappings for button simulation
-        self.key_mappings = {
-            pygame.K_a: 'A',  # A button
-            pygame.K_b: 'B',  # B button
-            pygame.K_c: 'C',  # C button
-            pygame.K_d: 'D',  # D button
-        }
-        
+        if PYGAME_AVAILABLE:
+            self.key_mappings = {
+                pygame.K_a: 'A',  # A button
+                pygame.K_b: 'B',  # B button
+                pygame.K_c: 'C',  # C button
+                pygame.K_d: 'D',  # D button
+            }
+        else:
+            self.key_mappings = {}
+            
         # Button callback handlers
         self.button_handlers = {}
     

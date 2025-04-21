@@ -13,19 +13,25 @@ class InkySimpleSimulator(BaseInky):
         :param display_type: Type of display (used to determine resolution)
         :param colour: Display color capability
         """
-        # Determine resolution based on display type
-        if display_type == "phat":
-            resolution = (212, 104)
-        elif display_type == "phatssd1608":
-            resolution = (250, 122)
-        elif display_type == "what" or display_type == "whatssd1683":
-            resolution = (400, 300)
-        elif display_type == "impressions73":
-            resolution = (800, 480)
-        else:  # Default to impressions/7colour
-            resolution = (600, 448)
-            colour = "multi"
+        # Check if resolution is already provided in kwargs
+        if 'resolution' not in kwargs:
+            # Determine resolution based on display type
+            if display_type == "phat":
+                kwargs['resolution'] = (212, 104)
+            elif display_type == "phatssd1608":
+                kwargs['resolution'] = (250, 122)
+            elif display_type == "what" or display_type == "whatssd1683":
+                kwargs['resolution'] = (400, 300)
+            elif display_type == "impressions73":
+                kwargs['resolution'] = (800, 480)
+            else:  # Default to impressions/7colour
+                kwargs['resolution'] = (600, 448)
+                colour = "multi"
         
+        # Get resolution from kwargs to pass to parent
+        resolution = kwargs.pop('resolution')
+        
+        # Call parent constructor
         super().__init__(resolution, colour, **kwargs)
         
         # Initialize buffer as zeros
