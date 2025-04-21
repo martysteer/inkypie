@@ -1,14 +1,19 @@
 """Pygame-based simulator for Inky displays."""
 import threading
 import time
+import sys
 import numpy as np
 from PIL import Image
 from .base import BaseInky
 
+# Try to import pygame, but don't fail if it's not available
 try:
     import pygame
+    PYGAME_AVAILABLE = True
 except ImportError:
-    raise ImportError("Simulator requires pygame. Install with: pip install pygame")
+    PYGAME_AVAILABLE = False
+    print("Warning: pygame not available. Using simple simulator instead.")
+    from .simple_simulator import InkySimpleSimulator
 
 class InkySimulator(BaseInky):
     """Pygame-based simulator for Inky displays."""
@@ -21,10 +26,23 @@ class InkySimulator(BaseInky):
         """
         super().__init__(resolution, colour)
         
-        self.buf = np.zeros((self.height, self.width), dtype=np.uint8)
+        # If pygame is not available, fall back to simple simulator
+        if not PYGAME_AVAILABLE:
+            print("Falling back to simple simulator...")
+            self._simple_simulator = InkySimpleSimulator(
+                resolution=resolution, 
+                colour=colour, 
+                **kwargs
+            )
+            return
+        
+        try:
+            self.buf = np.zeros((self.height, self.width), dtype=np.uint8)
+        except:
+            # Fallback if numpy is not available
+            self.buf = [[0 for x in range(self.width)] for y in range(self.height)]
+            
         self.border_colour = self.WHITE
-        self.pygame_initialized = False
-        self.screen = None
         self.h_flip = kwargs.get('h_flip', False)
         self.v_flip = kwargs.get('v_flip', False)
         self.rotation = 0
@@ -33,6 +51,8 @@ class InkySimulator(BaseInky):
         self._update_complete = threading.Event()
         self._refresh_fps = 2  # Slow refresh to simulate e-ink
         self._last_frame = None
+        self.pygame_initialized = False
+        self.screen = None
         
         # Define color palettes
         self.DESATURATED_PALETTE = [
@@ -92,31 +112,52 @@ class InkySimulator(BaseInky):
     
     def _display_loop(self):
         """Main display loop for simulator."""
-        while self._running:
-            if not self.pygame_initialized:
-                self._init_pygame()
+        # Exit if pygame not available
+        if not PYGAME_AVAILABLE:
+            return
             
-            # Handle events
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self._running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key in self.key_mappings:
-                        button = self.key_mappings[event.key]
-                        if button in self.button_handlers:
-                            for handler in self.button_handlers[button]:
-                                handler(button)
-            
-            # Update display if requested
-            if self._update_requested:
-                self._update_display()
-                self._update_requested = False
-                self._update_complete.set()
-            
-            time.sleep(1.0 / 30)  # 30 FPS UI
+        try:
+            while self._running:
+                if not self.pygame_initialized:
+                    try:
+                        self._init_pygame()
+                    except Exception as e:
+                        print(f"Error initializing pygame: {e}")
+                        time.sleep(1.0)
+                        continue
+                
+                # Handle events
+                try:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            self._running = False
+                        elif event.type == pygame.KEYDOWN:
+                            if event.key in self.key_mappings:
+                                button = self.key_mappings[event.key]
+                                if button in self.button_handlers:
+                                    for handler in self.button_handlers[button]:
+                                        handler(button)
+                except Exception as e:
+                    print(f"Error handling pygame events: {e}")
+                
+                # Update display if requested
+                if self._update_requested:
+                    try:
+                        self._update_display()
+                        self._update_requested = False
+                        self._update_complete.set()
+                    except Exception as e:
+                        print(f"Error updating display: {e}")
+                
+                time.sleep(1.0 / 30)  # 30 FPS UI
+        except Exception as e:
+            print(f"Display loop error: {e}")
     
     def _init_pygame(self):
         """Initialize pygame display."""
+        if not PYGAME_AVAILABLE:
+            return
+            
         pygame.init()
         pygame.display.set_caption(f"Inky Simulator - {self.width}x{self.height} - {self.colour}")
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -124,73 +165,84 @@ class InkySimulator(BaseInky):
     
     def _update_display(self):
         """Update the pygame display with current buffer."""
-        if not self.pygame_initialized:
+        if not PYGAME_AVAILABLE or not self.pygame_initialized:
             return
         
-        # Create PIL image from buffer
-        region = self.buf.copy()
-        
-        if self.v_flip:
-            region = np.fliplr(region)
-        
-        if self.h_flip:
-            region = np.flipud(region)
-        
-        if self.rotation:
-            region = np.rot90(region, self.rotation // 90)
-        
-        # Create PIL image with palette
-        img = Image.fromarray(region.astype(np.uint8))
-        
-        # Apply palette based on color mode
-        if self.colour == "multi":
-            palette = self._palette_blend(0.5)
-            palette_img = Image.new("P", (1, 1))
-            palette_img.putpalette(palette + [0, 0, 0] * 248)  # Fill remaining palette
-            img = img.convert("RGB", palette=palette_img.getpalette())
-        else:
-            # For red/black/yellow displays
-            if self.colour == "red":
-                palette = [255, 255, 255, 0, 0, 0, 255, 0, 0]
-            elif self.colour == "yellow":
-                palette = [255, 255, 255, 0, 0, 0, 255, 255, 0]
-            else:  # black
-                palette = [255, 255, 255, 0, 0, 0]
+        try:
+            # Create PIL image from buffer
+            region = self.buf.copy() if isinstance(self.buf, np.ndarray) else np.array(self.buf)
             
-            palette_img = Image.new("P", (1, 1))
-            palette_img.putpalette(palette + [0, 0, 0] * 252)  # Fill remaining palette
-            img = img.convert("P", palette=palette_img)
-        
-        # Simulate e-ink refresh effect
-        if self._last_frame is not None:
-            # First flash to white
-            self.screen.fill((255, 255, 255))
-            pygame.display.flip()
-            time.sleep(0.2)
+            if self.v_flip:
+                region = np.fliplr(region)
             
-            # Then flash to black
-            self.screen.fill((0, 0, 0))
-            pygame.display.flip()
-            time.sleep(0.2)
-        
-        # Convert to pygame surface and display
-        mode = img.mode
-        size = img.size
-        data = img.tobytes()
-        
-        # Handle different image modes
-        if mode == "P":
-            # Convert to RGB for pygame
-            img = img.convert("RGB")
+            if self.h_flip:
+                region = np.flipud(region)
+            
+            if self.rotation:
+                region = np.rot90(region, self.rotation // 90)
+            
+            # Create PIL image with palette
+            img = Image.fromarray(region.astype(np.uint8))
+            
+            # Apply palette based on color mode
+            if self.colour == "multi":
+                palette = self._palette_blend(0.5)
+                palette_img = Image.new("P", (1, 1))
+                palette_img.putpalette(palette + [0, 0, 0] * 248)  # Fill remaining palette
+                img = img.convert("RGB", palette=palette_img.getpalette())
+            else:
+                # For red/black/yellow displays
+                if self.colour == "red":
+                    palette = [255, 255, 255, 0, 0, 0, 255, 0, 0]
+                elif self.colour == "yellow":
+                    palette = [255, 255, 255, 0, 0, 0, 255, 255, 0]
+                else:  # black
+                    palette = [255, 255, 255, 0, 0, 0]
+                
+                palette_img = Image.new("P", (1, 1))
+                palette_img.putpalette(palette + [0, 0, 0] * 252)  # Fill remaining palette
+                img = img.convert("P", palette=palette_img)
+            
+            # Simulate e-ink refresh effect
+            if self._last_frame is not None:
+                # First flash to white
+                self.screen.fill((255, 255, 255))
+                pygame.display.flip()
+                time.sleep(0.2)
+                
+                # Then flash to black
+                self.screen.fill((0, 0, 0))
+                pygame.display.flip()
+                time.sleep(0.2)
+            
+            # Convert to pygame surface and display
             mode = img.mode
+            size = img.size
             data = img.tobytes()
             
-        surface = pygame.image.fromstring(data, size, mode)
-        self.screen.blit(surface, (0, 0))
-        pygame.display.flip()
-        
-        self._last_frame = region
+            # Handle different image modes
+            if mode == "P":
+                # Convert to RGB for pygame
+                img = img.convert("RGB")
+                mode = img.mode
+                data = img.tobytes()
+                
+            surface = pygame.image.fromstring(data, size, mode)
+            self.screen.blit(surface, (0, 0))
+            pygame.display.flip()
+            
+            self._last_frame = region
+        except Exception as e:
+            print(f"Error in _update_display: {e}")
     
+    # Delegate to simple simulator if pygame not available
+    def _check_pygame(self, method_name):
+        """Check if pygame is available, otherwise delegate to simple simulator."""
+        if not PYGAME_AVAILABLE and hasattr(self, '_simple_simulator'):
+            method = getattr(self._simple_simulator, method_name)
+            return method
+        return None
+        
     def set_pixel(self, x, y, v):
         """Set a single pixel.
 
@@ -198,8 +250,17 @@ class InkySimulator(BaseInky):
         :param y: y position on display
         :param v: colour to set
         """
+        delegate = self._check_pygame('set_pixel')
+        if delegate:
+            return delegate(x, y, v)
+            
         if 0 <= x < self.width and 0 <= y < self.height:
-            self.buf[y][x] = v & 0x07
+            try:
+                self.buf[y][x] = v & 0x07
+            except:
+                # Handle cases where buffer isn't a numpy array
+                if isinstance(self.buf, list):
+                    self.buf[y][x] = v & 0x07
     
     def set_image(self, image, saturation=0.5):
         """Copy an image to the display.
@@ -207,50 +268,45 @@ class InkySimulator(BaseInky):
         :param image: PIL image to display
         :param saturation: Saturation for 7-color displays
         """
+        delegate = self._check_pygame('set_image')
+        if delegate:
+            return delegate(image, saturation)
+            
         if not image.size == (self.width, self.height):
             image = image.resize((self.width, self.height))
         
-        if not image.mode == "P":
-            if self.colour == "multi":
-                # For 7-color displays
-                palette = self._palette_blend(saturation)
-                # Image size doesn't matter since it's just the palette we're using
-                palette_image = Image.new("P", (1, 1))
-                # Set our 7 colour palette (+ clear) and zero out the other 247 colours
-                palette_image.putpalette(palette + [0, 0, 0] * 248)
-                # Force source image data to be loaded for `.im` to work
-                image.load()
-                image = image.convert("P", palette=palette_image.palette)
-            else:
-                # For red/black/yellow displays
-                palette_image = Image.new("P", (1, 1))
-                r, g, b = 0, 0, 0
-                if self.colour == "red":
-                    r = 255
-                if self.colour == "yellow":
-                    r = g = 255
-                palette_image.putpalette([255, 255, 255, 0, 0, 0, r, g, b] + [0, 0, 0] * 252)
-                image.load()
-                image = image.convert("P", palette=palette_image.palette)
-        
-        self.buf = np.array(image, dtype=np.uint8).reshape((self.height, self.width))
+        try:
+            self.buf = np.array(image, dtype=np.uint8).reshape((self.height, self.width))
+        except:
+            # Store image for later reference if numpy conversion fails
+            self.image = image
     
     def set_border(self, colour):
         """Set the border colour.
 
         :param colour: The border colour.
         """
+        delegate = self._check_pygame('set_border')
+        if delegate:
+            return delegate(colour)
+            
         self.border_colour = colour
     
     def setup(self):
         """Set up the display (not needed for simulator)."""
-        pass
+        delegate = self._check_pygame('setup')
+        if delegate:
+            return delegate()
     
     def show(self, busy_wait=True):
         """Show buffer on display.
 
         :param busy_wait: If True, wait for display update to finish before returning.
         """
+        delegate = self._check_pygame('show')
+        if delegate:
+            return delegate(busy_wait)
+            
         self._update_requested = True
         if busy_wait:
             self._update_complete.clear()
@@ -258,6 +314,10 @@ class InkySimulator(BaseInky):
     
     def wait_for_window_close(self):
         """Wait until the pygame window has closed."""
+        delegate = self._check_pygame('wait_for_window_close')
+        if delegate:
+            return delegate()
+            
         if self.pygame_initialized:
             while self._running:
                 time.sleep(0.1)
@@ -269,6 +329,10 @@ class InkySimulator(BaseInky):
         :param button: Button identifier (A, B, C, D)
         :param handler: Callback function that takes button as argument
         """
+        delegate = self._check_pygame('register_button_handler')
+        if delegate:
+            return delegate(button, handler)
+            
         if button not in self.button_handlers:
             self.button_handlers[button] = []
         self.button_handlers[button].append(handler)

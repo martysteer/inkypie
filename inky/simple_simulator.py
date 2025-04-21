@@ -28,11 +28,18 @@ class InkySimpleSimulator(BaseInky):
         
         super().__init__(resolution, colour, **kwargs)
         
-        self.buf = np.zeros((self.height, self.width), dtype=np.uint8)
+        # Initialize buffer as zeros
+        try:
+            self.buf = np.zeros((self.height, self.width), dtype=np.uint8)
+        except:
+            # Fallback if numpy is not available
+            self.buf = [[0 for x in range(self.width)] for y in range(self.height)]
+        
         self.border_colour = self.WHITE
         self.h_flip = kwargs.get('h_flip', False)
         self.v_flip = kwargs.get('v_flip', False)
         self.rotation = 0
+        self.image = None  # Store the last image for show()
         
         # Define color palettes for 7-color displays
         self.DESATURATED_PALETTE = [
@@ -58,7 +65,12 @@ class InkySimpleSimulator(BaseInky):
         :param v: colour to set
         """
         if 0 <= x < self.width and 0 <= y < self.height:
-            self.buf[y][x] = v & 0x07
+            try:
+                self.buf[y][x] = v & 0x07
+            except:
+                # Handle cases where buffer isn't a numpy array
+                if isinstance(self.buf, list):
+                    self.buf[y][x] = v & 0x07
     
     def set_image(self, image, saturation=0.5):
         """Copy an image to the display.
@@ -70,7 +82,13 @@ class InkySimpleSimulator(BaseInky):
             image = image.resize((self.width, self.height))
         
         self.image = image  # Store for later display
-        self.buf = np.array(image, dtype=np.uint8).reshape((self.height, self.width))
+        
+        # Try to convert the image to the buffer format
+        try:
+            self.buf = np.array(image, dtype=np.uint8).reshape((self.height, self.width))
+        except:
+            # If we can't convert to numpy array, just store the image
+            pass
     
     def set_border(self, colour):
         """Set the border colour.
@@ -91,30 +109,59 @@ class InkySimpleSimulator(BaseInky):
         print("Displaying image...")
         
         # Convert buffer to PIL Image
-        if hasattr(self, 'image'):
+        if hasattr(self, 'image') and self.image is not None:
             # If set_image was called, use that image
-            img = self.image
+            img = self.image.copy()
         else:
             # Otherwise convert from buffer
-            img = Image.fromarray(self.buf)
+            try:
+                if isinstance(self.buf, np.ndarray):
+                    img = Image.fromarray(self.buf)
+                else:
+                    # Create a new image and populate from buffer list
+                    img = Image.new("P", (self.width, self.height))
+                    for y in range(self.height):
+                        for x in range(self.width):
+                            try:
+                                img.putpixel((x, y), self.buf[y][x])
+                            except:
+                                # Skip any pixels that cause errors
+                                pass
+            except:
+                # If conversion fails, create a blank image as fallback
+                img = Image.new("RGB", (self.width, self.height), (255, 255, 255))
+                print("Warning: Could not convert buffer to image")
         
         # Apply flips and rotations
-        if self.v_flip:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        
-        if self.h_flip:
-            img = img.transpose(Image.FLIP_TOP_BOTTOM)
-        
-        if self.rotation:
-            if self.rotation == 90:
-                img = img.transpose(Image.ROTATE_90)
-            elif self.rotation == 180:
-                img = img.transpose(Image.ROTATE_180)
-            elif self.rotation == 270:
-                img = img.transpose(Image.ROTATE_270)
+        try:
+            if self.v_flip:
+                img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            
+            if self.h_flip:
+                img = img.transpose(Image.FLIP_TOP_BOTTOM)
+            
+            if self.rotation:
+                # Handle Image.ROTATE_* constants in different PIL versions
+                if hasattr(Image, 'ROTATE_90'):
+                    # Older PIL versions
+                    rotations = {
+                        90: Image.ROTATE_90,
+                        180: Image.ROTATE_180,
+                        270: Image.ROTATE_270
+                    }
+                    if self.rotation in rotations:
+                        img = img.transpose(rotations[self.rotation])
+                else:
+                    # Newer PIL versions
+                    img = img.rotate(-self.rotation, expand=True)
+        except Exception as e:
+            print(f"Warning: Error applying transformations: {e}")
         
         # Display the image
-        img.show()
+        try:
+            img.show()
+        except Exception as e:
+            print(f"Error showing image: {e}")
         
         # Simulate e-ink refresh delay
         time.sleep(1.0)
@@ -124,3 +171,7 @@ class InkySimpleSimulator(BaseInky):
         """Wait until the user closes the PIL window (not implemented)."""
         print("Simple simulator does not support wait_for_window_close.")
         print("Press Ctrl+C to exit.")
+    
+    def register_button_handler(self, button, handler):
+        """Register a handler for button presses (not implemented in simple simulator)."""
+        print(f"Button '{button}' registration not supported in simple simulator.")

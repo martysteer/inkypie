@@ -59,7 +59,12 @@ def create_hardware_inky(display_type, colour=None, **kwargs):
     
     # Import the appropriate class
     class_path = HARDWARE_DISPLAY_CLASSES[display_type]
-    InkyClass = dynamic_import(class_path)
+    try:
+        InkyClass = dynamic_import(class_path)
+    except ImportError as e:
+        print(f"Warning: Could not import hardware class {class_path}: {e}")
+        print("Falling back to simulator...")
+        return create_simulator_inky(display_type, colour, **kwargs)
     
     # Check if we need to pass the colour parameter
     if display_type in ("impressions", "7colour", "impressions73"):
@@ -87,27 +92,33 @@ def create_simulator_inky(display_type, colour=None, use_pygame=True, **kwargs):
             colour = "black"  # Default
     
     # Get appropriate resolution for this display type
-    resolution = RESOLUTION_MAPPINGS.get(display_type, (600, 448))
+    resolution = kwargs.get('resolution', None) or RESOLUTION_MAPPINGS.get(display_type, (600, 448))
     
-    # Choose between pygame and simple simulator
+    # Try advanced simulator first
     if use_pygame:
         try:
             from .simulator import InkySimulator
             return InkySimulator(resolution=resolution, colour=colour, **kwargs)
-        except ImportError:
-            # Fall back to simple simulator if pygame not available
+        except ImportError as e:
+            print(f"Advanced simulator not available: {e}")
+            print("Falling back to simple simulator...")
             use_pygame = False
     
-    if not use_pygame:
+    # Fall back to simple simulator
+    try:
         from .simple_simulator import InkySimpleSimulator
         return InkySimpleSimulator(display_type=display_type, colour=colour, **kwargs)
+    except ImportError as e:
+        print(f"Simple simulator not available: {e}")
+        raise ImportError("No simulator implementation available. Please check your installation.")
 
-def create_inky(display_type, colour=None, simulation=None, **kwargs):
+def create_inky(display_type, colour=None, simulation=None, verbose=False, **kwargs):
     """Create appropriate Inky implementation based on platform and settings.
     
     :param display_type: Type of Inky display
     :param colour: Colour capability (if applicable)
     :param simulation: Force simulation mode (True/False), or auto-detect (None)
+    :param verbose: Print verbose information
     :return: Appropriate Inky implementation
     """
     # Determine if we should use hardware or simulator
@@ -118,14 +129,16 @@ def create_inky(display_type, colour=None, simulation=None, **kwargs):
         use_hardware = not simulation
     
     # Debug info
-    implementation_type = "hardware" if use_hardware else "simulator"
-    print(f"Creating {implementation_type} implementation for {display_type} ({colour})")
+    if verbose:
+        implementation_type = "hardware" if use_hardware else "simulator"
+        print(f"Creating {implementation_type} implementation for {display_type} ({colour})")
     
     if use_hardware:
         try:
             return create_hardware_inky(display_type, colour, **kwargs)
         except (ImportError, ValueError) as e:
-            print(f"Warning: Hardware implementation failed ({e}), falling back to simulator")
+            if verbose:
+                print(f"Warning: Hardware implementation failed ({e}), falling back to simulator")
             return create_simulator_inky(display_type, colour, **kwargs)
     else:
         return create_simulator_inky(display_type, colour, **kwargs)
