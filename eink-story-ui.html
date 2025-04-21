@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Story Triplet Builder</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    .block {
+      margin: 15px 0;
+      padding: 10px;
+      border: 1px solid #aaa;
+      background: #fff;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #vignette {
+      margin-top: 30px;
+      padding: 15px;
+      background: #222;
+      color: #eee;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Short Story Triplet Builder</h1>
+
+<div class="block">
+  <strong>Character:</strong> <span id="character">-</span>
+</div>
+<div class="block">
+  <strong>Setting:</strong> <span id="setting">-</span>
+</div>
+<div class="block">
+  <strong>Moment:</strong> <span id="moment">-</span>
+</div>
+
+<div class="buttons">
+  <button onclick="prev()">C ←</button>
+  <button onclick="next()">B →</button>
+  <button onclick="select()">A ✓</button>
+  <button onclick="toggleMode()">D ☰</button>
+</div>
+
+<div id="vignette"></div>
+
+<script>
+  const data = {
+    "cinematic_noir": {
+      "Character": ["Private Eye", "Silent Dancer", "Street Hustler", "Jazz Singer", "Detective"],
+      "Setting": ["Foggy Alley", "Neon Bar", "Rain-Slicked Street", "Motel Room", "Rooftop Edge"],
+      "Clue_Moment": ["Whispered Name", "Dropped Lighter", "Glint of Steel", "Phone Off Hook", "Final Glance"]
+    }
+  };
+
+  const vignettes = {
+    "Private Eye|Motel Room|Dropped Lighter":
+      "The lighter clinked on tile, still warm. He didn’t need the matchbook clue—it was her scent on the pillow that burned. The motel room whispered old lies with fresh breath. Cigarette smoke hung like a question mark. Outside, the case kept unfolding, but she’d already rewritten the ending."
+  };
+
+  let mode = 0; // 0 = select Character, 1 = Setting, 2 = Moment, 3 = View Story
+  let indexes = [0, 0, 0];
+  const keys = ["Character", "Setting", "Clue_Moment"];
+
+  function updateDisplay() {
+    document.getElementById('character').textContent = data.cinematic_noir.Character[indexes[0]];
+    document.getElementById('setting').textContent = data.cinematic_noir.Setting[indexes[1]];
+    document.getElementById('moment').textContent = data.cinematic_noir.Clue_Moment[indexes[2]];
+    document.getElementById('vignette').textContent = mode === 3 ? generateVignette() : '';
+  }
+
+  function next() {
+    const key = keys[mode % 3];
+    const list = data.cinematic_noir[key];
+    indexes[mode % 3] = (indexes[mode % 3] + 1) % list.length;
+    updateDisplay();
+  }
+
+  function prev() {
+    const key = keys[mode % 3];
+    const list = data.cinematic_noir[key];
+    indexes[mode % 3] = (indexes[mode % 3] - 1 + list.length) % list.length;
+    updateDisplay();
+  }
+
+  function select() {
+    if (mode < 2) {
+      mode++;
+    } else {
+      mode = 3;
+    }
+    updateDisplay();
+  }
+
+  function toggleMode() {
+    mode = 0;
+    updateDisplay();
+  }
+
+  function generateVignette() {
+    const char = data.cinematic_noir.Character[indexes[0]];
+    const setting = data.cinematic_noir.Setting[indexes[1]];
+    const moment = data.cinematic_noir.Clue_Moment[indexes[2]];
+    const key = `${char}|${setting}|${moment}`;
+    return vignettes[key] || `She stood in the ${setting}, a ${char} shaped by a ${moment}. What came next was uncertain, but everything before it pointed here.`;
+  }
+
+  updateDisplay();
+</script>
+
+</body>
+</html>

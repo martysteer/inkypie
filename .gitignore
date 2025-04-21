@@ -28,3 +28,4 @@ library/debian/
 packaging/*tar.xz
 .DS_Store
 sphinx.virtualenv
+.venv
