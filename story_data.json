@@ -1,0 +1,121 @@
+{
+  "theme_specific": {
+    "cinematic_noir": {
+      "Character": ["Private Eye", "Silent Dancer", "Street Hustler", "Jazz Singer", "Detective"],
+      "Setting": ["Foggy Alley", "Neon Bar", "Rain-Slicked Street", "Motel Room", "Rooftop Edge"],
+      "Clue_Moment": ["Whispered Name", "Dropped Lighter", "Glint of Steel", "Phone Off Hook", "Final Glance"]
+    },
+    "romantic_dreamlike": {
+      "Persona": ["Stargazer", "Writer", "Painter", "Lover", "Stranger"],
+      "Scene": ["Flower Field", "Rainy Window", "Sunset Dock", "Old Café", "Paris Balcony"],
+      "Emotion": ["Hopeful Longing", "Gentle Ache", "Fleeting Joy", "Blooming Warmth", "Timeless Yearning"]
+    },
+    "moody_introspective": {
+      "Figure": ["Drifter", "Old Soul", "Outsider", "Thinker", "Watcher"],
+      "Space": ["Empty Lot", "Dusty Library", "Forest Path", "Overpass", "Cracked Sidewalk"],
+      "Mood": ["Disconnection", "Quiet Melancholy", "Fading Light", "Bitter Calm", "Still Reflection"]
+    },
+    "retro_nostalgic": {
+      "Icon": ["Milkman", "Mod Girl", "Greaser", "Film Star", "War Bride"],
+      "Era_Location": ["1950s Suburb", "60s Diner", "Drive-In", "Red Carpet", "Train Station"],
+      "Item_Trigger": ["Tin Lunchbox", "Roller Skates", "Jukebox Tune", "Pocket Camera", "Love Letter"]
+    },
+    "gritty_real": {
+      "Human_Detail": ["Torn Hoodie", "Bruised Knuckles", "Tight Grip", "Cracked Smile", "Bent Posture"],
+      "Urban_Texture": ["Brick Wall", "Chain-Link Fence", "Scuffed Concrete", "Rusted Sign", "Flickering Lamp"],
+      "Incident": ["Bike Crash", "Missed Shot", "Siren Echo", "Lost Wallet", "Screamed Name"]
+    }
+  },
+  "gestalt_meta": {
+    "visual_layout": [
+      "Grided Symmetry",
+      "Leading Lines",
+      "Layered Depth",
+      "Negative Space",
+      "Rule of Thirds",
+      "Center-Focused",
+      "Off-Balance Tilt",
+      "Vignette Framing"
+    ],
+    "contrast_light": [
+      "High Contrast / Hard Shadows",
+      "Soft Pastel Glow",
+      "Low-Key Darkness",
+      "Blown Highlights",
+      "Monochrome Muted",
+      "Split Lighting",
+      "Color Gel Pop",
+      "Even Natural Light"
+    ],
+    "portrait_landscape_types": [
+      "Portrait – Tight Crop",
+      "Portrait – Environmental",
+      "Portrait – Silhouetted Backlight",
+      "Landscape – Wide Open Space",
+      "Landscape – Vertical Vista",
+      "Landscape – Abstract Terrain",
+      "Street – Snapshot in Motion",
+      "Street – Framed Reaction"
+    ],
+    "historical_periods": [
+      "Victorian London",
+      "1920s Jazz Age",
+      "1940s Wartime",
+      "1960s Revolution",
+      "1980s Suburbia",
+      "Ancient Rome",
+      "Post-War Berlin",
+      "Future Dystopia (Neo-Tokyo)"
+    ],
+    "artistic_genres": [
+      "Impressionist Blur",
+      "Film Noir Shadowplay",
+      "Expressionist Color",
+      "Surrealist Dreamscape",
+      "Pop Art Block Tone",
+      "Baroque Drama",
+      "Minimalist Isolation",
+      "Modernist Displacement"
+    ]
+  },
+  "vignettes": {
+    "cinematic_noir": {
+      "Private Eye|Motel Room|Dropped Lighter": "The lighter clinked on tile, still warm. He didn't need the matchbook clue—it was her scent on the pillow that burned. The motel room whispered old lies with fresh breath. Cigarette smoke hung like a question mark. Outside, the case kept unfolding, but she'd already rewritten the ending.",
+      "Detective|Foggy Alley|Glint of Steel": "The fog twisted around her ankles as she moved deeper into the alley. A distant flash—metal catching light. She froze, hand on her holster. Twenty years on the force taught her that steel in darkness rarely offered second chances."
+    },
+    "romantic_dreamlike": {
+      "Painter|Sunset Dock|Fleeting Joy": "She painted until the sun dipped low, each brushstroke pulling memories from the water's edge. He never returned, but the glow on the dock held his shape. The canvas dried with her smile—thin, unfinished. The joy, like light, touched everything briefly before fading into evening."
+    },
+    "retro_nostalgic": {
+      "War Bride|Train Station|Love Letter": "She stood where he'd promised, the letter folded tight in her glove. Steam curled around her heels as the train departed again—empty. Each year, same place. She wasn't waiting for him anymore, not really. Only for the sound of wheels and the echo of paper words."
+    },
+    "moody_introspective": {
+      "Drifter|Forest Path|Fading Light": "He walked paths that never stayed the same. Each fork led deeper into the hush of trees, dusk dimming all directions. The light thinned like old film reels, catching on branches, slipping through. He never looked back; the forest, like his past, never gave him the option."
+    },
+    "gritty_real": {
+      "Torn Hoodie|Brick Wall|Siren Echo": "He sprinted past the mural, shoes hitting pavement like a drumline. Sirens tangled with city echoes, bouncing between alleys and broken bricks. His hoodie flapped, threadbare and real. Behind him, names were being shouted. Ahead, a single alley light flickered, no promise of safety—just another turn in the grid."
+    }
+  },
+  "story_triplets": [
+    {
+      "metaphor": "Star Network",
+      "triplet": ["The Painter", "Sunset Dock", "Fleeting Joy"]
+    },
+    {
+      "metaphor": "Ring Network",
+      "triplet": ["War Bride", "Train Station", "Love Letter"]
+    },
+    {
+      "metaphor": "Tree Network",
+      "triplet": ["Drifter", "Forest Path", "Fading Light"]
+    },
+    {
+      "metaphor": "Mesh Network",
+      "triplet": ["Torn Hoodie", "Brick Wall", "Siren Echo"]
+    },
+    {
+      "metaphor": "Hub-and-Spoke",
+      "triplet": ["Private Eye", "Motel Room", "Dropped Lighter"]
+    }
+  ]
+}
