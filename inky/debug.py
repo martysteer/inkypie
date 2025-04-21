@@ -5,6 +5,7 @@ import sys
 import logging
 from PIL import Image, ImageDraw, ImageFont
 from .base import BaseInky
+from .platform import is_raspberry_pi
 
 # Set up logging
 logger = logging.getLogger("inky.debug")
@@ -28,6 +29,8 @@ class InkyDebugger:
         self.inky = inky_instance
         self.width = inky_instance.width
         self.height = inky_instance.height
+        
+        # Save original methods
         self.original_show = inky_instance.show
         self.original_set_image = inky_instance.set_image
         
@@ -125,7 +128,12 @@ class InkyDebugger:
         for x in range(0, self.width, spacing):
             for y in range(0, self.height, spacing):
                 label = f"({x},{y})"
-                draw.text((x + 2, y + 2), label, fill=color, font=font)
+                # Check for different versions of PIL with different textbbox methods
+                if hasattr(draw, 'textbbox'):
+                    draw.text((x + 2, y + 2), label, fill=color, font=font)
+                else:
+                    # Fall back to older PIL versions
+                    draw.text((x + 2, y + 2), label, fill=color, font=font)
     
     def draw_test_pattern(self):
         """Draw a test pattern showing available colors on the display."""
@@ -184,7 +192,17 @@ class InkyDebugger:
             text_color = self.inky.WHITE if color_value != self.inky.WHITE else self.inky.BLACK
             
             # Position text in center of band
-            text_width, text_height = draw.textbbox((0, 0), color_name, font=font)[2:4]
+            try:
+                # For newer PIL versions
+                if hasattr(draw, 'textbbox'):
+                    text_width, text_height = draw.textbbox((0, 0), color_name, font=font)[2:4]
+                else:
+                    # For older PIL versions
+                    text_width, text_height = draw.textsize(color_name, font=font)
+            except:
+                # Fallback if text measuring fails
+                text_width, text_height = len(color_name) * 10, 20
+                
             x_text = (self.width - text_width) // 2
             y_text = y_start + (band_height - text_height) // 2
             
@@ -220,6 +238,7 @@ class InkyDebugger:
         print(f"Display Type: {display_type}")
         print(f"Resolution: {self.width} x {self.height}")
         print(f"Colour Mode: {self.inky.colour}")
+        print(f"Platform: {'Raspberry Pi' if is_raspberry_pi() else 'Simulator'}")
         
         # Try to access additional attributes
         try:
@@ -256,6 +275,7 @@ class FastModeEnabler:
         self.inky = inky_instance
         self.original_show = inky_instance.show
         self.original_update = None
+        self.enabled = False
         
         # Look for _update method (varies between display types)
         if hasattr(inky_instance, '_update'):
@@ -265,6 +285,10 @@ class FastModeEnabler:
     
     def enable(self):
         """Enable fast mode by disabling e-ink timing constraints."""
+        if self.enabled:
+            logger.info("Fast mode is already enabled")
+            return
+            
         logger.warning("Enabling FAST MODE - This bypasses e-ink timing for development only")
         logger.warning("Do not use fast mode for extended periods on real hardware!")
         
@@ -293,10 +317,15 @@ class FastModeEnabler:
             
             self.inky._busy_wait = fast_busy_wait
         
+        self.enabled = True
         logger.info("Fast mode enabled - refresh delays bypassed")
     
     def disable(self):
         """Disable fast mode, restoring original timing."""
+        if not self.enabled:
+            logger.info("Fast mode is not enabled")
+            return
+            
         # Restore original methods
         self.inky.show = self.original_show
         
@@ -307,4 +336,5 @@ class FastModeEnabler:
         if hasattr(self.inky, '_busy_wait') and self.inky._busy_wait.__name__ == 'fast_busy_wait':
             delattr(self.inky, '_busy_wait')
         
+        self.enabled = False
         logger.info("Fast mode disabled - normal timing restored")

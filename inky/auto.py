@@ -4,17 +4,30 @@ import os
 
 from . import eeprom
 from .factory import create_inky
-from .platform import should_use_hardware, get_implementation_type
+from .platform import should_use_hardware, get_implementation_type, is_raspberry_pi
 
-# Maintain imports for backward compatibility
-from .inky_ac073tc1a import Inky as InkyAC073TC1A  # noqa: F401
-from .inky_ssd1683 import Inky as InkyWHAT_SSD1683  # noqa: F401
-from .inky_uc8159 import Inky as InkyUC8159  # noqa: F401
-from .phat import InkyPHAT, InkyPHAT_SSD1608  # noqa: F401
-from .what import InkyWHAT  # noqa: F401
-
+# Define constants without importing hardware modules
 DISPLAY_TYPES = ["what", "phat", "phatssd1608", "impressions", "7colour", "whatssd1683", "impressions73"]
 DISPLAY_COLORS = ["red", "black", "yellow"]
+
+# Only import hardware-specific modules if we're on a Raspberry Pi
+if is_raspberry_pi():
+    try:
+        # Import hardware-specific classes for backward compatibility
+        from .inky_ac073tc1a import Inky as InkyAC073TC1A  # noqa: F401
+        from .inky_ssd1683 import Inky as InkyWHAT_SSD1683  # noqa: F401
+        from .inky_uc8159 import Inky as InkyUC8159  # noqa: F401
+        from .phat import InkyPHAT, InkyPHAT_SSD1608  # noqa: F401
+        from .what import InkyWHAT  # noqa: F401
+        
+        # Flag to indicate hardware modules are available
+        HARDWARE_MODULES_AVAILABLE = True
+    except ImportError:
+        # Hardware modules not available
+        HARDWARE_MODULES_AVAILABLE = False
+else:
+    # Not on Raspberry Pi, so hardware modules are not available
+    HARDWARE_MODULES_AVAILABLE = False
 
 
 def auto(i2c_bus=None, ask_user=False, verbose=False, simulation=None):
@@ -39,41 +52,51 @@ def auto(i2c_bus=None, ask_user=False, verbose=False, simulation=None):
     if verbose:
         print(f"Platform detected: {platform_type}")
         print(f"Using {'hardware' if use_hardware else 'simulator'} implementation")
+
+    # If we're not using hardware or hardware modules aren't available,
+    # default to creating a simulator
+    if not use_hardware or not HARDWARE_MODULES_AVAILABLE:
+        if verbose:
+            if not HARDWARE_MODULES_AVAILABLE and use_hardware:
+                print("Hardware modules not available, using simulator")
+            elif not use_hardware:
+                print("Simulation mode requested")
+                
+        # Default to impressions simulator if no specific type is requested
+        return create_inky("impressions", simulation=True, verbose=verbose)
     
     # Try to detect display from EEPROM if using hardware
-    if use_hardware:
-        _eeprom = eeprom.read_eeprom(i2c_bus=i2c_bus)
+    _eeprom = eeprom.read_eeprom(i2c_bus=i2c_bus)
+    
+    if _eeprom is not None:
+        if verbose:
+            print(f"Detected {_eeprom.get_variant()}")
         
-        if _eeprom is not None:
-            if verbose:
-                print(f"Detected {_eeprom.get_variant()}")
-            
-            # Map display variant to type and color
-            if _eeprom.display_variant in (1, 4, 5):
-                return create_inky("phat", _eeprom.get_color(), simulation=simulation, verbose=verbose)
-            
-            if _eeprom.display_variant in (10, 11, 12):
-                return create_inky("phatssd1608", _eeprom.get_color(), simulation=simulation, verbose=verbose)
-            
-            if _eeprom.display_variant in (2, 3, 6, 7, 8):
-                return create_inky("what", _eeprom.get_color(), simulation=simulation, verbose=verbose)
-            
-            if _eeprom.display_variant == 14:
-                return create_inky("impressions", resolution=(600, 448), simulation=simulation, verbose=verbose)
-            
-            if _eeprom.display_variant in (15, 16):
-                return create_inky("impressions", resolution=(640, 400), simulation=simulation, verbose=verbose)
-            
-            if _eeprom.display_variant in (17, 18, 19):
-                return create_inky("whatssd1683", _eeprom.get_color(), resolution=(400, 300), simulation=simulation, verbose=verbose)
-            
-            if _eeprom.display_variant == 20:
-                return create_inky("impressions73", resolution=(800, 480), simulation=simulation, verbose=verbose)
+        # Map display variant to type and color
+        if _eeprom.display_variant in (1, 4, 5):
+            return create_inky("phat", _eeprom.get_color(), simulation=simulation, verbose=verbose)
+        
+        if _eeprom.display_variant in (10, 11, 12):
+            return create_inky("phatssd1608", _eeprom.get_color(), simulation=simulation, verbose=verbose)
+        
+        if _eeprom.display_variant in (2, 3, 6, 7, 8):
+            return create_inky("what", _eeprom.get_color(), simulation=simulation, verbose=verbose)
+        
+        if _eeprom.display_variant == 14:
+            return create_inky("impressions", resolution=(600, 448), simulation=simulation, verbose=verbose)
+        
+        if _eeprom.display_variant in (15, 16):
+            return create_inky("impressions", resolution=(640, 400), simulation=simulation, verbose=verbose)
+        
+        if _eeprom.display_variant in (17, 18, 19):
+            return create_inky("whatssd1683", _eeprom.get_color(), resolution=(400, 300), simulation=simulation, verbose=verbose)
+        
+        if _eeprom.display_variant == 20:
+            return create_inky("impressions73", resolution=(800, 480), simulation=simulation, verbose=verbose)
     
     # If we reach here, either:
-    # 1. We're in simulation mode
-    # 2. No EEPROM was detected
-    # 3. The EEPROM contained an unknown display variant
+    # 1. No EEPROM was detected
+    # 2. The EEPROM contained an unknown display variant
     
     if ask_user:
         if verbose and use_hardware:

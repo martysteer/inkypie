@@ -14,7 +14,6 @@ class BaseInky(ABC):
     ORANGE = 6
     CLEAN = 7
 
-    @abstractmethod
     def __init__(self, resolution, colour, **kwargs):
         """Initialize an Inky Display.
 
@@ -24,6 +23,15 @@ class BaseInky(ABC):
         self.resolution = resolution
         self.width, self.height = resolution
         self.colour = colour
+        
+        # Common optional parameters
+        self.h_flip = kwargs.get('h_flip', False)
+        self.v_flip = kwargs.get('v_flip', False)
+        self.rotation = kwargs.get('rotation', 0)
+        self.border_colour = kwargs.get('border_colour', self.WHITE)
+        
+        # For debugging
+        self.verbose = kwargs.get('verbose', False)
 
     @abstractmethod
     def set_pixel(self, x, y, v):
