@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
 Inky Image Viewer - Display images on Inky displays from local files or URLs.
-For the 7-color Inky Impression display.
+Supports all Inky display types and works cross-platform with the new simulator.
 Supports gallery mode with button navigation.
 """
 import sys
 import os
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 import argparse
 import time
 import requests
@@ -14,26 +17,14 @@ import signal
 from io import BytesIO
 from PIL import Image
 
-try:
-    import gpiod
-    import gpiodevice
-    from gpiod.line import Bias, Direction, Edge
-    BUTTON_SUPPORT = True
-except ImportError:
-    BUTTON_SUPPORT = False
-    print("Warning: gpiod not available. Button support disabled.")
-
-try:
-    from inky.auto import auto
-except ImportError:
-    print("Please install the Inky library: pip install inky")
-    sys.exit(1)
+# Import from new cross-platform Inky library framework
+from inky import auto, create_inky, is_raspberry_pi
+from inky.platform import get_implementation_type
 
 # Get the path to the script's directory
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 # GPIO pins for buttons (from top to bottom)
-# These will vary depending on platform 
 # A, B, C, D buttons
 BUTTONS = [5, 6, 16, 24]
 LABELS = ["A", "B", "C", "D"]
@@ -64,12 +55,26 @@ class GalleryViewer:
         self.debounce_time = 0.5  # seconds
         
         # Set up buttons if available and not in simulation mode
-        if BUTTON_SUPPORT and not simulation:
-            self.setup_buttons()
+        if is_raspberry_pi() and not simulation:
+            try:
+                self.setup_hardware_buttons()
+            except (ImportError, Exception) as e:
+                if verbose:
+                    print(f"Hardware button setup failed: {e}")
+                self.setup_simulator_buttons()
+        else:
+            self.setup_simulator_buttons()
     
-    def setup_buttons(self):
-        """Set up button handling."""
+    def setup_hardware_buttons(self):
+        """Set up physical hardware buttons using gpiod."""
+        if self.verbose:
+            print("Setting up hardware buttons...")
+        
         try:
+            import gpiod
+            import gpiodevice
+            from gpiod.line import Bias, Direction, Edge
+            
             # Create settings for input pins
             input_settings = gpiod.LineSettings(
                 direction=Direction.INPUT, 
@@ -88,22 +93,48 @@ class GalleryViewer:
             self.request = self.chip.request_lines(consumer="inky-gallery", config=line_config)
             
             # Start button handling thread
-            self.button_thread = threading.Thread(target=self.button_handler, daemon=True)
+            self.button_thread = threading.Thread(target=self.hardware_button_handler, daemon=True)
             self.button_thread.start()
             
             if self.verbose:
-                print("Button controls enabled:")
+                print("Hardware button controls enabled:")
                 print("  A: Previous image")
                 print("  B: Next image")
                 print("  C: Rotate counter-clockwise")
                 print("  D: Rotate clockwise")
-                
         except Exception as e:
-            print(f"Error setting up buttons: {e}")
-            print("Button controls disabled")
+            if self.verbose:
+                print(f"Hardware button setup failed: {e}")
+            raise
     
-    def button_handler(self):
-        """Handle button presses in a separate thread."""
+    def setup_simulator_buttons(self):
+        """Set up simulator button handlers if using simulator."""
+        if self.verbose:
+            print("Setting up simulator buttons...")
+        
+        # Check if the display supports simulator button handlers
+        if hasattr(self.inky_display, 'register_button_handler'):
+            # Register button handlers with the simulator
+            self.inky_display.register_button_handler('A', lambda btn: self.show_previous())
+            self.inky_display.register_button_handler('B', lambda btn: self.show_next())
+            self.inky_display.register_button_handler('C', lambda btn: self.rotate_left())
+            self.inky_display.register_button_handler('D', lambda btn: self.rotate_right())
+            
+            if self.verbose:
+                print("Simulator button controls enabled:")
+                print("  A key: Previous image")
+                print("  B key: Next image")
+                print("  C key: Rotate counter-clockwise")
+                print("  D key: Rotate clockwise")
+        else:
+            if self.verbose:
+                print("Simulator button controls not available for this display type")
+            print("Use keyboard controls instead:")
+            print("  Left/Right arrows: Navigate images")
+            print("  R key: Rotate image")
+    
+    def hardware_button_handler(self):
+        """Handle hardware button presses in a separate thread."""
         while self.running:
             try:
                 for event in self.request.read_edge_events():
@@ -114,7 +145,7 @@ class GalleryViewer:
                 time.sleep(0.1)
     
     def handle_button_press(self, event):
-        """Process button press events."""
+        """Process button press events from hardware."""
         # Implement debounce
         current_time = time.time()
         if current_time - self.last_button_time < self.debounce_time:
@@ -216,14 +247,13 @@ class GalleryViewer:
         if self.verbose:
             print("Processing image for display...")
         
-        # Different display types have different methods
-        if hasattr(self.inky_display, 'set_image'):
-            if 'saturation' in self.inky_display.set_image.__code__.co_varnames:
-                # For 7-color displays that support saturation
-                self.inky_display.set_image(processed_image, saturation=self.saturation)
-            else:
-                # For other displays
-                self.inky_display.set_image(processed_image)
+        # Different display types have different methods for set_image
+        if 'saturation' in self.inky_display.set_image.__code__.co_varnames:
+            # For 7-color displays that support saturation
+            self.inky_display.set_image(processed_image, saturation=self.saturation)
+        else:
+            # For other displays
+            self.inky_display.set_image(processed_image)
         
         if self.verbose:
             print("Updating display...")
@@ -253,19 +283,37 @@ def get_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='Display images on Inky.')
     
+    # Display configuration
+    display_group = parser.add_argument_group('Display Configuration')
+    display_group.add_argument('--type', '-t', 
+                              choices=["phat", "what", "phatssd1608", "impressions", "7colour", "whatssd1683", "impressions73", "auto"], 
+                              default="auto", help='Inky display type')
+    display_group.add_argument('--color', '-c', 
+                              choices=["black", "red", "yellow", "multi"], 
+                              default=None, help='Display color (for non-7-color displays)')
+    display_group.add_argument('--simulation', '-s', action='store_true', 
+                              help='Force simulation mode even on Raspberry Pi')
+    display_group.add_argument('--width', type=int, default=600,
+                              help='Display width for custom simulation')
+    display_group.add_argument('--height', type=int, default=448,
+                              help='Display height for custom simulation')
+    
+    # Image source
     source_group = parser.add_mutually_exclusive_group(required=True)
-    source_group.add_argument('--file', type=str, help='Path to local image file')
-    source_group.add_argument('--url', type=str, help='URL of image to download')
-    source_group.add_argument('--gallery-file', type=str, help='Path to text file with list of image URLs')
+    source_group.add_argument('--file', '-f', type=str, help='Path to local image file')
+    source_group.add_argument('--url', '-u', type=str, help='URL of image to download')
+    source_group.add_argument('--gallery-file', '-g', type=str, help='Path to text file with list of image URLs')
     source_group.add_argument('--sample', type=int, help='Use sample image (1-3) from samples directory')
     
-    parser.add_argument('--rotate', type=int, choices=[0, 90, 180, 270], default=0, 
-                      help='Initial rotation (degrees)')
-    parser.add_argument('--saturation', type=float, default=0.5, 
-                      help='Saturation for 7-color displays (0.0 to 1.0)')
-    parser.add_argument('--simulation', action='store_true', 
-                      help='Simulate display without actual hardware')
-    parser.add_argument('--verbose', action='store_true', 
+    # Image options
+    image_group = parser.add_argument_group('Image Options')
+    image_group.add_argument('--rotate', '-r', type=int, choices=[0, 90, 180, 270], default=0, 
+                            help='Initial rotation (degrees)')
+    image_group.add_argument('--saturation', type=float, default=0.5, 
+                            help='Saturation for 7-color displays (0.0 to 1.0)')
+    
+    # Other options
+    parser.add_argument('--verbose', '-v', action='store_true', 
                       help='Enable verbose output')
     
     return parser.parse_args()
@@ -371,6 +419,12 @@ def main():
     args = get_args()
     verbose = args.verbose
     
+    # Display platform information
+    if verbose:
+        platform_type = get_implementation_type()
+        print(f"Platform detected: {platform_type}")
+        print(f"Using {'hardware' if is_raspberry_pi() and not args.simulation else 'simulator'} implementation")
+    
     # Handle sample images
     if args.sample is not None:
         sample_num = args.sample
@@ -382,27 +436,35 @@ def main():
         if verbose:
             print(f"Using sample image: {sample_file}")
     
-    # Set up display
+    # Set up display based on arguments
     try:
-        if args.simulation:
-            # Use mock display with 7-color simulation
-            print("Running in simulation mode")
-            from inky.mock import InkyMockImpression
-            inky_display = InkyMockImpression()
-            import atexit
-            atexit.register(inky_display.wait_for_window_close)
+        if args.type == "auto":
+            # Auto-detect display
+            if verbose:
+                print("Auto-detecting display...")
+            inky_display = auto(verbose=verbose, simulation=args.simulation)
         else:
-            # Use actual display
-            inky_display = auto()
-            if hasattr(inky_display, 'set_border'):
-                inky_display.set_border(inky_display.WHITE)
+            # Create specified display
+            if verbose:
+                print(f"Creating {args.type} display...")
+            inky_display = create_inky(args.type, args.color, 
+                                      simulation=args.simulation,
+                                      resolution=(args.width, args.height) if args.simulation else None)
+        
+        # Set border to white if supported
+        if hasattr(inky_display, 'set_border') and hasattr(inky_display, 'WHITE'):
+            inky_display.set_border(inky_display.WHITE)
+            
     except Exception as e:
         print(f"Error initializing display: {e}")
-        print("If using hardware, ensure I2C and SPI are enabled with:")
-        print("  sudo raspi-config nonint do_i2c 0")
-        print("  sudo raspi-config nonint do_spi 0")
-        print("  sudo nano /boot/firmware/config.txt (add 'dtoverlay=spi0-0cs')")
-        print("Or try with --simulation to test without hardware")
+        print("\nTroubleshooting tips:")
+        print("1. If using hardware, ensure I2C and SPI are enabled:")
+        print("   sudo raspi-config nonint do_i2c 0")
+        print("   sudo raspi-config nonint do_spi 0")
+        print("2. Check the SPI settings in /boot/firmware/config.txt:")
+        print("   dtoverlay=spi0-0cs")
+        print("3. Try --simulation flag to test without hardware")
+        print("4. Specify display type with --type flag")
         sys.exit(1)
     
     image_urls = []
@@ -426,7 +488,7 @@ def main():
         image_files=image_files,
         saturation=args.saturation,
         verbose=verbose,
-        simulation=args.simulation
+        simulation=args.simulation or not is_raspberry_pi()
     )
     
     # Set initial rotation
@@ -438,7 +500,7 @@ def main():
         
         # For simulation mode or when using gallery, 
         # we need to keep the main thread running
-        if args.simulation or args.gallery_file:
+        if args.simulation or args.gallery_file or not is_raspberry_pi():
             print("Press Ctrl+C to exit")
             while True:
                 time.sleep(1)

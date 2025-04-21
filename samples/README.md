@@ -1,51 +1,39 @@
 # Sample Images for InkyPie
 
-This directory contains sample images optimized for Inky displays.
+This directory contains sample images for testing with the Inky displays. Sample images should be named according to the pattern `sample1.jpg`, `sample2.jpg`, etc.
 
-## Available Samples
+## Using Sample Images
 
-1. **sample1.svg** - Basic InkyPie logo with red and black elements
-   - Size: 400×300 pixels
-   - Colors: Black, red, white
-   - Good test for multi-color Inky displays
-
-2. **sample2_bw.svg** - E-ink optimized high contrast sample
-   - Size: 400×300 pixels  
-   - Colors: Black and white only
-   - Features grid pattern and concentric circles
-   - Perfect for testing contrast and detail rendering
-
-## Usage
-
-Run the image viewer with these samples:
+You can use these sample images with the Inky Image Viewer by specifying the sample number:
 
 ```bash
-# Display the InkyPie logo
-python3 ../inky_image_viewer.py --url samples/sample1.svg
-
-# Display the black and white optimized sample
-python3 ../inky_image_viewer.py --url samples/sample2_bw.svg
+python ../inky_image_viewer.py --sample 1
 ```
 
-## Display Optimization Tips
+## Recommended Image Properties
 
 For best results with e-ink displays:
 
-1. **High Contrast**: Use stark black and white elements when possible
-2. **Bold Lines**: Thin lines may not render well on e-ink
-3. **Limited Colors**: Only use colors supported by your display
-4. **Avoid Gradients**: E-ink displays can't show smooth gradients
-5. **Optimize Text**: Use larger, bold fonts for better readability
-6. **Consider Dithering**: When converting color images
+- **High Contrast**: E-ink displays work best with high-contrast images
+- **Bold Elements**: Thin lines and subtle details may not display well
+- **Appropriate Size**: Images will be automatically resized, but starting with dimensions close to your display size is ideal
+- **Limited Color Palette**: For color displays, use bold, distinct colors
 
-## Creating Your Own Samples
+## Adding Your Own Samples
 
-SVG files work well because they're scalable and can be easily modified. Create your own samples using vector graphics software like Inkscape or Adobe Illustrator.
+Feel free to add your own sample images to this directory. Just follow the naming convention:
 
-For bitmap images, PNG format is recommended. Consider these resolutions for different Inky displays:
+- `sample1.jpg`
+- `sample2.jpg`
+- `sample3.jpg`
+- etc.
 
-- **Inky pHAT**: 212×104 or 250×122 pixels
-- **Inky wHAT**: 400×300 pixels
-- **Inky Impression 4"**: 640×400 pixels
-- **Inky Impression 5.7"**: 600×448 pixels
-- **Inky Impression 7.3"**: 800×480 pixels
+These can be any common image format (JPG, PNG, GIF, BMP) and will be automatically processed for display.
+
+## Included Samples
+
+If you don't have any sample images, you can use URLs from the `sample_gallery.txt` file, which includes links to some example images:
+
+```bash
+python ../inky_image_viewer.py --gallery-file ../sample_gallery.txt
+```
