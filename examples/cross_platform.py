@@ -5,6 +5,10 @@ This script demonstrates using the new factory pattern to work seamlessly
 across Raspberry Pi hardware and other platforms with simulator.
 """
 import os
+import sys
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import time
 import argparse
 from PIL import Image, ImageDraw, ImageFont

@@ -6,6 +6,9 @@ Supports gallery mode with button navigation.
 """
 import sys
 import os
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 import argparse
 import time
 import requests
