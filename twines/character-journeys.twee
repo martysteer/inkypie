@@ -1,0 +1,150 @@
+:: StoryTitle
+Character Journey Explorer
+
+:: StoryData
+{
+  "ifid": "G985C58C-DEFA-4F70-B7A2-27742230C0FC",
+  "format": "Harlowe",
+  "format-version": "3.2.1",
+  "start": "Start",
+  "zoom": 1
+}
+
+:: StoryInit [script]
+/* Character-indexed data structure reorganized from our JSON */
+(set: $characterJourneys to (datamap:
+  "Private Eye", (a:
+    (datamap: 
+      "theme", "cinematic_noir",
+      "setting", "Motel Room", 
+      "moment", "Dropped Lighter",
+      "text", "The lighter clinked on tile, still warm. He didn't need the matchbook clue—it was her scent on the pillow that burned. The motel room whispered old lies with fresh breath. Cigarette smoke hung like a question mark. Outside, the case kept unfolding, but she'd already rewritten the ending."
+    ),
+    (datamap: 
+      "theme", "cinematic_noir",
+      "setting", "Neon Bar", 
+      "moment", "Whispered Name",
+      "text", "Blue neon painted his face as she leaned in. Her lips barely moved—just enough to form the name that changed everything. The bar's din swallowed her whisper whole, but he'd caught it. Already his mind was reshuffling the case like a crooked dealer. That name. It connected dots he'd been blind to for weeks."
+    ),
+    (datamap: 
+      "theme", "cinematic_noir",
+      "setting", "Rain-Slicked Street", 
+      "moment", "Final Glance",
+      "text", "Rain pounded the pavement like a judge's gavel. She turned—just once—her silhouette haloed by distant headlights. That look said everything his paycheck couldn't buy. Wipers kept time with his pulse as her taxi splashed into darkness. This wasn't an ending. In his line of work, there were only pauses between troubles."
+    )
+  ),
+  "Detective", (a:
+    (datamap: 
+      "theme", "cinematic_noir",
+      "setting", "Foggy Alley", 
+      "moment", "Glint of Steel",
+      "text", "The fog twisted around her ankles as she moved deeper into the alley. A distant flash—metal catching light. She froze, hand on her holster. Twenty years on the force taught her that steel in darkness rarely offered second chances."
+    ),
+    (datamap: 
+      "theme", "cinematic_noir",
+      "setting", "Motel Room", 
+      "moment", "Phone Off Hook",
+      "text", "The motel door swung open to stale air and cheap cologne. Room 8, just like the message said. She drew her gun before hitting the light switch. Empty. Bed untouched. Only the phone hung off its cradle, softly humming. She pressed it to her ear and heard breathing—then the click of a hammer being pulled back somewhere close by."
+    )
+  ),
+  "Painter", (a:
+    (datamap: 
+      "theme", "romantic_dreamlike",
+      "setting", "Sunset Dock", 
+      "moment", "Fleeting Joy",
+      "text", "She painted until the sun dipped low, each brushstroke pulling memories from the water's edge. He never returned, but the glow on the dock held his shape. The canvas dried with her smile—thin, unfinished. The joy, like light, touched everything briefly before fading into evening."
+    ),
+    (datamap: 
+      "theme", "romantic_dreamlike",
+      "setting", "Paris Balcony", 
+      "moment", "Gentle Ache",
+      "text", "Morning light spilled across unfinished canvases. She hadn't captured it right—the precise blue of that evening they shared wine above the Seine. Each attempt darkened with longing. Pigment couldn't hold memory; it slipped through brush bristles like time through fingers. The ache of almost—almost perfect, almost love—seeped into every color she mixed."
+    )
+  )
+  /* Add other characters and their vignettes */
+))
+
+/* Organize characters by theme for theme-based browsing */
+(set: $charactersByTheme to (datamap:))
+(for: each _character, ...(datanames: $characterJourneys))[
+  (for: each _vignette, ...($characterJourneys's _character))[
+    (set: $_theme to _vignette's "theme")
+    (if: (datamap: $charactersByTheme) contains $_theme)[
+      (if: ($charactersByTheme's $_theme) does not contain _character)[
+        (set: $charactersByTheme's $_theme to ($charactersByTheme's $_theme) + (a: _character))
+      ]
+    ]
+    (else:)[
+      (set: $charactersByTheme's $_theme to (a: _character))
+    ]
+  ]
+]
+
+(set: $currentCharacter to "")
+(set: $journeyPosition to 0)
+
+:: Start
+# Character Journey Explorer
+
+Explore the narrative universe through the journeys of different characters:
+
+## Browse Characters
+
+(for: each _character, ...(datanames: $characterJourneys))[(link-repeat: _character)[(set: $currentCharacter to _character)(set: $journeyPosition to 0)(goto: "Character Journey")]]
+
+## Browse by Theme
+
+(for: each _theme, ...(datanames: $charactersByTheme))[
+  # {_theme}
+  (for: each _character, ...($charactersByTheme's _theme))[(link-repeat: _character)[(set: $currentCharacter to _character)(set: $journeyPosition to 0)(goto: "Character Journey")]]
+]
+
+:: Character Journey
+(if: $currentCharacter is "")[(goto: "Start")]
+
+# The Journey of {$currentCharacter}
+
+(set: $totalJourneyPoints to (count: ...($characterJourneys's $currentCharacter)))
+(set: $currentVignette to ($characterJourneys's $currentCharacter)'s $journeyPosition)
+
+## {$currentVignette's "setting"} | {$currentVignette's "moment"}
+*Theme: {$currentVignette's "theme"}*
+
+{$currentVignette's "text"}
+
+---
+
+(if: $journeyPosition > 0)[
+  (link-repeat: "◀ Previous Moment")[
+    (set: $journeyPosition to $journeyPosition - 1)
+    (goto: "Character Journey")
+  ]
+]
+
+(if: $journeyPosition < $totalJourneyPoints - 1)[
+  (link-repeat: "Next Moment ▶")[
+    (set: $journeyPosition to $journeyPosition + 1)
+    (goto: "Character Journey")
+  ]
+]
+
+## Journey Progress
+(for: each _i, ...(range: 0, $totalJourneyPoints - 1))[
+  (if: _i is $journeyPosition)[ ● ]
+  (else:)[ ○ ]
+]
+
+[[Explore Another Character->Start]]
+
+:: StoryStylesheet [stylesheet]
+body {
+  font-family: Georgia, serif;
+}
+tw-story {
+  max-width: 800px;
+  margin: 0 auto;
+}
+h1 {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.5em;
+}

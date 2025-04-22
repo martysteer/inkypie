@@ -1,0 +1,124 @@
+:: StoryTitle
+Dynamic Vignettes Explorer
+
+:: StoryData
+{
+  "ifid": "D674C58C-DEFA-4F70-B7A2-27742230C0FC",
+  "format": "Harlowe",
+  "format-version": "3.2.1",
+  "start": "Start",
+  "zoom": 1
+}
+
+:: StoryInit [script]
+(set: $storyData to (datamap:
+  "theme_specific", (datamap:
+    "cinematic_noir", (datamap:
+      "Character", (a: "Private Eye", "Silent Dancer", "Street Hustler", "Jazz Singer", "Detective"),
+      "Setting", (a: "Foggy Alley", "Neon Bar", "Rain-Slicked Street", "Motel Room", "Rooftop Edge"),
+      "Clue_Moment", (a: "Whispered Name", "Dropped Lighter", "Glint of Steel", "Phone Off Hook", "Final Glance")
+    ),
+    "romantic_dreamlike", (datamap:
+      "Persona", (a: "Stargazer", "Writer", "Painter", "Lover", "Stranger"),
+      "Scene", (a: "Flower Field", "Rainy Window", "Sunset Dock", "Old Café", "Paris Balcony"),
+      "Emotion", (a: "Hopeful Longing", "Gentle Ache", "Fleeting Joy", "Blooming Warmth", "Timeless Yearning")
+    ),
+    "moody_introspective", (datamap:
+      "Figure", (a: "Drifter", "Old Soul", "Outsider", "Thinker", "Watcher"),
+      "Space", (a: "Empty Lot", "Dusty Library", "Forest Path", "Overpass", "Cracked Sidewalk"),
+      "Mood", (a: "Disconnection", "Quiet Melancholy", "Fading Light", "Bitter Calm", "Still Reflection")
+    ),
+    "retro_nostalgic", (datamap:
+      "Icon", (a: "Milkman", "Mod Girl", "Greaser", "Film Star", "War Bride"),
+      "Era_Location", (a: "1950s Suburb", "60s Diner", "Drive-In", "Red Carpet", "Train Station"),
+      "Item_Trigger", (a: "Tin Lunchbox", "Roller Skates", "Jukebox Tune", "Pocket Camera", "Love Letter")
+    ),
+    "gritty_real", (datamap:
+      "Human_Detail", (a: "Torn Hoodie", "Bruised Knuckles", "Tight Grip", "Cracked Smile", "Bent Posture"),
+      "Urban_Texture", (a: "Brick Wall", "Chain-Link Fence", "Scuffed Concrete", "Rusted Sign", "Flickering Lamp"),
+      "Incident", (a: "Bike Crash", "Missed Shot", "Siren Echo", "Lost Wallet", "Screamed Name")
+    )
+  ),
+  "vignettes", (datamap:
+    "cinematic_noir", (datamap:
+      "Private Eye|Motel Room|Dropped Lighter", "The lighter clinked on tile, still warm. He didn't need the matchbook clue—it was her scent on the pillow that burned. The motel room whispered old lies with fresh breath. Cigarette smoke hung like a question mark. Outside, the case kept unfolding, but she'd already rewritten the ending.",
+      "Detective|Foggy Alley|Glint of Steel", "The fog twisted around her ankles as she moved deeper into the alley. A distant flash—metal catching light. She froze, hand on her holster. Twenty years on the force taught her that steel in darkness rarely offered second chances.",
+      "Private Eye|Neon Bar|Whispered Name", "Blue neon painted his face as she leaned in. Her lips barely moved—just enough to form the name that changed everything. The bar's din swallowed her whisper whole, but he'd caught it. Already his mind was reshuffling the case like a crooked dealer. That name. It connected dots he'd been blind to for weeks."
+      /* Add other vignettes */
+    ),
+    /* Add other themes */
+  )
+))
+
+(set: $availableVignettes to (a:))
+(set: $theme to "")
+(set: $character to "")
+(set: $setting to "")
+(set: $moment to "")
+(set: $history to (a:))
+
+:: Start
+# Thematic Vignettes Explorer
+
+Welcome to the Dynamic Vignettes Explorer. Choose a thematic style to begin your journey:
+
+(for: each _theme, ...(datanames: (datamap: $storyData's "theme_specific")))[(link-repeat: _theme)[(set: $theme to _theme)(goto: "Select Character")]]
+
+:: Select Character
+(if: $theme is not "")[(set: $characterType to (find: each _key, ...(datanames: (datamap: $storyData's "theme_specific"'s $theme)), _key contains "Character" or _key contains "Persona" or _key contains "Figure" or _key contains "Icon" or _key contains "Human_Detail")'s 1st)]
+
+# Choose a {$characterType}
+
+(for: each _char, ...($storyData's "theme_specific"'s $theme's $characterType))[(link-repeat: _char)[(set: $character to _char)(goto: "Select Setting")]]
+
+[[Back->Start]]
+
+:: Select Setting
+(if: $theme is not "" and $character is not "")[(set: $settingType to (find: each _key, ...(datanames: (datamap: $storyData's "theme_specific"'s $theme)), _key contains "Setting" or _key contains "Scene" or _key contains "Space" or _key contains "Era_Location" or _key contains "Urban_Texture")'s 1st)]
+
+# Choose a {$settingType}
+
+(for: each _setting, ...($storyData's "theme_specific"'s $theme's $settingType))[(link-repeat: _setting)[(set: $setting to _setting)(goto: "Select Moment")]]
+
+[[Back->Select Character]]
+
+:: Select Moment
+(if: $theme is not "" and $character is not "" and $setting is not "")[(set: $momentType to (find: each _key, ...(datanames: (datamap: $storyData's "theme_specific"'s $theme)), _key contains "Moment" or _key contains "Emotion" or _key contains "Mood" or _key contains "Item_Trigger" or _key contains "Incident")'s 1st)]
+
+# Choose a {$momentType}
+
+(for: each _moment, ...($storyData's "theme_specific"'s $theme's $momentType))[(link-repeat: _moment)[(set: $moment to _moment)(goto: "View Vignette")]]
+
+[[Back->Select Setting]]
+
+:: View Vignette
+(set: $key to $character + "|" + $setting + "|" + $moment)
+(set: $vignette to "")
+
+(if: (datamap: $storyData's "vignettes"'s $theme) contains $key)[(set: $vignette to (datamap: $storyData's "vignettes"'s $theme)'s $key)]
+
+# {$character} | {$setting} | {$moment}
+
+(if: $vignette is not "")[
+{$vignette}
+(set: $history to $history + (a: (datamap: "theme", $theme, "character", $character, "setting", $setting, "moment", $moment, "vignette", $vignette)))
+]
+(else:)[
+*This combination doesn't have a written vignette yet. Choose another combination or create your own narrative in your mind.*
+
+*What might this scene look like? What story could unfold here?*
+]
+
+[[Try another combination->Start]]
+(if: (count: ...$history) > 0)[[View History]]
+
+:: View History
+# Your Vignette History
+
+(for: each _entry, ...$history)[
+## {_entry's "character"} | {_entry's "setting"} | {_entry's "moment"}
+{_entry's "vignette"}
+---
+]
+
+[[Back to Explorer->Start]]

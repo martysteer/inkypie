@@ -1,0 +1,96 @@
+:: StoryTitle
+Narrative Branching Vignettes
+
+:: StoryData
+{
+  "ifid": "E785C58C-DEFA-4F70-B7A2-27742230C0FC",
+  "format": "Harlowe",
+  "format-version": "3.2.1",
+  "start": "Start",
+  "zoom": 1
+}
+
+:: StoryInit [script]
+/* Simplified version of the JSON data */
+(set: $storyData to (datamap:
+  "vignettes", (datamap:
+    "cinematic_noir", (datamap:
+      "Private Eye|Motel Room|Dropped Lighter", "The lighter clinked on tile, still warm...",
+      "Detective|Foggy Alley|Glint of Steel", "The fog twisted around her ankles..."
+    ),
+    "romantic_dreamlike", (datamap:
+      "Painter|Sunset Dock|Fleeting Joy", "She painted until the sun dipped low..."
+    )
+  )
+))
+
+/* Define relationships between storylets */
+(set: $connections to (datamap:
+  "Private Eye|Motel Room|Dropped Lighter", (a: 
+    (datamap: "theme", "cinematic_noir", "key", "Detective|Foggy Alley|Glint of Steel", "reason", "Follow the suspect"),
+    (datamap: "theme", "romantic_dreamlike", "key", "Painter|Sunset Dock|Fleeting Joy", "reason", "Flashback to earlier times")
+  ),
+  "Detective|Foggy Alley|Glint of Steel", (a:
+    (datamap: "theme", "cinematic_noir", "key", "Private Eye|Motel Room|Dropped Lighter", "reason", "Return to the scene")
+  )
+))
+
+(set: $currentTheme to "")
+(set: $currentKey to "")
+(set: $visitedStorylets to (a:))
+
+:: Start
+# Narrative Branching Vignettes
+
+Choose where to begin your story:
+
+[[The Private Eye in the Motel Room->Storylet:cinematic_noir:Private Eye|Motel Room|Dropped Lighter]]
+[[The Detective in the Foggy Alley->Storylet:cinematic_noir:Detective|Foggy Alley|Glint of Steel]]
+[[The Painter at the Sunset Dock->Storylet:romantic_dreamlike:Painter|Sunset Dock|Fleeting Joy]]
+
+:: Storylet [storylet]
+(set: $parts to (split: passage name, ":"))
+(set: $currentTheme to $parts's 2nd)
+(set: $currentKey to $parts's 3rd)
+
+(if: $visitedStorylets does not contain $currentKey)[(set: $visitedStorylets to $visitedStorylets + (a: $currentKey))]
+
+# {(split: $currentKey, "|")'s 1st} | {(split: $currentKey, "|")'s 2nd} | {(split: $currentKey, "|")'s 3rd}
+
+{($storyData's "vignettes"'s $currentTheme)'s $currentKey}
+
+---
+
+## Where the story could go next:
+
+(if: $connections contains $currentKey)[
+  (for: each _connection, ...($connections's $currentKey))[
+    (link-repeat: _connection's "reason")[
+      (goto: "Storylet:" + _connection's "theme" + ":" + _connection's "key")
+    ]
+  ]
+]
+(else:)[
+  *This storylet doesn't have any connections yet.*
+]
+
+(if: (count: ...$visitedStorylets) > 1)[
+  [[Return to previously visited storylets->Visited Storylets]]
+]
+[[Start over->Start]]
+
+:: Visited Storylets
+# Storylets You've Visited
+
+(for: each _key, ...$visitedStorylets)[
+  (set: $parts to (split: _key, "|"))
+  (link-repeat: $parts's 1st + " | " + $parts's 2nd + " | " + $parts's 3rd)[
+    (for: each _theme, ...(datanames: $storyData's "vignettes"))[
+      (if: ($storyData's "vignettes"'s _theme) contains _key)[
+        (goto: "Storylet:" + _theme + ":" + _key)
+      ]
+    ]
+  ]
+]
+
+[[Return to Start->Start]]

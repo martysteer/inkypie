@@ -1,0 +1,180 @@
+:: StoryTitle
+Mood Explorer
+
+:: StoryData
+{
+  "ifid": "H085C58C-DEFA-4F70-B7A2-27742230C0FC",
+  "format": "Harlowe",
+  "format-version": "3.2.1",
+  "start": "Start",
+  "zoom": 1
+}
+
+:: StoryInit [script]
+/* Tag-enriched vignette data */
+(set: $taggedVignettes to (a:
+  (datamap:
+    "id", "noir-lighter",
+    "theme", "cinematic_noir",
+    "character", "Private Eye", 
+    "setting", "Motel Room", 
+    "moment", "Dropped Lighter",
+    "tags", (a: "suspense", "mystery", "solitude", "clue", "memory"),
+    "mood", (datamap: "tension", 4, "melancholy", 3, "hope", 1),
+    "text", "The lighter clinked on tile, still warm. He didn't need the matchbook clue—it was her scent on the pillow that burned. The motel room whispered old lies with fresh breath. Cigarette smoke hung like a question mark. Outside, the case kept unfolding, but she'd already rewritten the ending."
+  ),
+  (datamap:
+    "id", "noir-steel",
+    "theme", "cinematic_noir",
+    "character", "Detective", 
+    "setting", "Foggy Alley", 
+    "moment", "Glint of Steel",
+    "tags", (a: "danger", "suspense", "caution", "urban", "threat"),
+    "mood", (datamap: "tension", 5, "melancholy", 2, "hope", 1),
+    "text", "The fog twisted around her ankles as she moved deeper into the alley. A distant flash—metal catching light. She froze, hand on her holster. Twenty years on the force taught her that steel in darkness rarely offered second chances."
+  ),
+  (datamap:
+    "id", "romantic-sunset",
+    "theme", "romantic_dreamlike",
+    "character", "Painter", 
+    "setting", "Sunset Dock", 
+    "moment", "Fleeting Joy",
+    "tags", (a: "memory", "art", "loss", "beauty", "transience"),
+    "mood", (datamap: "tension", 1, "melancholy", 4, "hope", 3),
+    "text", "She painted until the sun dipped low, each brushstroke pulling memories from the water's edge. He never returned, but the glow on the dock held his shape. The canvas dried with her smile—thin, unfinished. The joy, like light, touched everything briefly before fading into evening."
+  ),
+  (datamap:
+    "id", "nostalgic-letter",
+    "theme", "retro_nostalgic",
+    "character", "War Bride", 
+    "setting", "Train Station", 
+    "moment", "Love Letter",
+    "tags", (a: "waiting", "devotion", "history", "absence", "ritual"),
+    "mood", (datamap: "tension", 2, "melancholy", 5, "hope", 2),
+    "text", "She stood where he'd promised, the letter folded tight in her glove. Steam curled around her heels as the train departed again—empty. Each year, same place. She wasn't waiting for him anymore, not really. Only for the sound of wheels and the echo of paper words."
+  ),
+  (datamap:
+    "id", "moody-forest",
+    "theme", "moody_introspective",
+    "character", "Drifter", 
+    "setting", "Forest Path", 
+    "moment", "Fading Light",
+    "tags", (a: "solitude", "nature", "transition", "escape", "silence"),
+    "mood", (datamap: "tension", 2, "melancholy", 4, "hope", 1),
+    "text", "He walked paths that never stayed the same. Each fork led deeper into the hush of trees, dusk dimming all directions. The light thinned like old film reels, catching on branches, slipping through. He never looked back; the forest, like his past, never gave him the option."
+  )
+  /* Add other vignettes with tags and mood values */
+))
+
+/* Collect all unique tags */
+(set: $allTags to (a:))
+(for: each _vignette, ...$taggedVignettes)[
+  (for: each _tag, ...(_vignette's "tags"))[
+    (if: $allTags does not contain _tag)[(set: $allTags to $allTags + (a: _tag))]
+  ]
+]
+
+/* Collect all moods */
+(set: $allMoods to (a:))
+(for: each _vignette, ...$taggedVignettes)[
+  (for: each _mood, ...(datanames: (datamap: _vignette's "mood")))[
+    (if: $allMoods does not contain _mood)[(set: $allMoods to $allMoods + (a: _mood))]
+  ]
+]
+
+(set: $selectedTags to (a:))
+(set: $moodLevels to (datamap:))
+(for: each _mood, ...$allMoods)[(set: $moodLevels's _mood to 0)]
+
+:: Start
+# Mood Explorer
+
+Discover vignettes by selecting tags that interest you or adjusting the mood levels.
+
+## Select Tags (click to toggle)
+(for: each _tag, ...$allTags)[
+  (if: $selectedTags contains _tag)[
+    (link-repeat: "[X] " + _tag)[(set: $selectedTags to $selectedTags - (a: _tag))(goto: "Start")]
+  ]
+  (else:)[
+    (link-repeat: "[ ] " + _tag)[(set: $selectedTags to $selectedTags + (a: _tag))(goto: "Start")]
+  ]
+]
+
+## Adjust Mood Levels
+(for: each _mood, ...$allMoods)[
+  *{_mood}*: 
+  (link-repeat: "0")[(set: $moodLevels's _mood to 0)(goto: "Start")] 
+  (link-repeat: "1")[(set: $moodLevels's _mood to 1)(goto: "Start")] 
+  (link-repeat: "2")[(set: $moodLevels's _mood to 2)(goto: "Start")] 
+  (link-repeat: "3")[(set: $moodLevels's _mood to 3)(goto: "Start")] 
+  (link-repeat: "4")[(set: $moodLevels's _mood to 4)(goto: "Start")] 
+  (link-repeat: "5")[(set: $moodLevels's _mood to 5)(goto: "Start")]
+]
+
+## Matching Vignettes
+(set: $matchingVignettes to (a:))
+
+(for: each _vignette, ...$taggedVignettes)[
+  (set: $tagMatch to false)
+  (set: $moodMatch to true)
+  
+  /* Check if vignette has at least one selected tag */
+  (if: (count: ...$selectedTags) is 0)[(set: $tagMatch to true)]
+  (else:)[
+    (for: each _tag, ...$selectedTags)[
+      (if: (_vignette's "tags") contains _tag)[(set: $tagMatch to true)]
+    ]
+  ]
+  
+  /* Check if vignette matches mood levels */
+  (for: each _mood, ...(datanames: (datamap: $moodLevels)))[
+    (if: $moodLevels's _mood > 0)[
+      (if: ((_vignette's "mood") contains _mood) and ((_vignette's "mood")'s _mood) < $moodLevels's _mood)[
+        (set: $moodMatch to false)
+      ]
+    ]
+  ]
+  
+  (if: $tagMatch and $moodMatch)[(set: $matchingVignettes to $matchingVignettes + (a: _vignette))]
+]
+
+(if: (count: ...$matchingVignettes) > 0)[
+  (for: each _match, ...$matchingVignettes)[
+    (link-repeat: _match's "character" + " | " + _match's "setting" + " | " + _match's "moment")[(goto: "View:" + _match's "id")]
+  ]
+]
+(else:)[
+  *No vignettes match your current selection. Try adjusting your tags or mood levels.*
+]
+
+:: View [script]
+(set: $id to (split: passage name, ":") 's 2nd)
+(set: $vignette to (find: each _v, ...$taggedVignettes, _v's "id" is $id) 's 1st)
+
+# {$vignette's "character"} | {$vignette's "setting"} | {$vignette's "moment"}
+*Theme: {$vignette's "theme"}*
+
+{$vignette's "text"}
+
+## Tags:
+(for: each _tag, ...($vignette's "tags"))[ #{_tag} ]
+
+## Mood Profile:
+(for: each _mood, ...(datanames: (datamap: $vignette's "mood")))[
+  *{_mood}*: (for: each _i, ...(range: 1, ($vignette's "mood")'s _mood))[■](for: each _i, ...(range: ($vignette's "mood")'s _mood + 1, 5))[□]
+]
+
+[[Find more vignettes->Start]]
+
+:: StoryStylesheet [stylesheet]
+body {
+  font-family: Georgia, serif;
+}
+tw-story {
+  max-width: 800px;
+  margin: 0 auto;
+}
+h1, h2 {
+  margin-top: 1em;
+}

@@ -1,0 +1,133 @@
+:: StoryTitle
+Procedural Vignette Generator
+
+:: StoryData
+{
+  "ifid": "F885C58C-DEFA-4F70-B7A2-27742230C0FC",
+  "format": "Harlowe",
+  "format-version": "3.2.1",
+  "start": "Start",
+  "zoom": 1
+}
+
+:: StoryInit [script]
+/* Import theme data */
+(set: $themeData to (datamap:
+  "cinematic_noir", (datamap:
+    "Character", (a: "Private Eye", "Silent Dancer", "Street Hustler", "Jazz Singer", "Detective"),
+    "Setting", (a: "Foggy Alley", "Neon Bar", "Rain-Slicked Street", "Motel Room", "Rooftop Edge"),
+    "Clue_Moment", (a: "Whispered Name", "Dropped Lighter", "Glint of Steel", "Phone Off Hook", "Final Glance")
+  ),
+  "romantic_dreamlike", (datamap:
+    "Persona", (a: "Stargazer", "Writer", "Painter", "Lover", "Stranger"),
+    "Scene", (a: "Flower Field", "Rainy Window", "Sunset Dock", "Old Café", "Paris Balcony"),
+    "Emotion", (a: "Hopeful Longing", "Gentle Ache", "Fleeting Joy", "Blooming Warmth", "Timeless Yearning")
+  )
+  /* Add other themes */
+))
+
+/* Template fragments for each theme */
+(set: $templates to (datamap:
+  "cinematic_noir", (a:
+    "The $setting_descriptor. $character_intro. A $moment_description that $dramatic_consequence.",
+    "$character_intro in the $setting_descriptor when $moment_description. The $noir_object $noir_action as $dramatic_consequence.",
+    "$setting_descriptor surrounded $character_pronoun. $moment_description made $character_pronoun $dramatic_reaction. $noir_reflection."
+  ),
+  "romantic_dreamlike", (a:
+    "The $setting_descriptor where $character_intro. $emotion_description filled the air as $romantic_action.",
+    "$character_intro amid the $setting_descriptor. Every $romantic_object seemed to $romantic_action, creating a sense of $emotion_description.",
+    "$setting_descriptor caught the light as $character_intro. The $emotion_description between them $romantic_consequence."
+  )
+  /* Add templates for other themes */
+))
+
+/* Word bank for procedural generation */
+(set: $wordBank to (datamap:
+  "cinematic_noir", (datamap:
+    "setting_descriptor", (a: "rain-slicked streets glistened under neon signs", "fog coiled between buildings like cigarette smoke", "motel room reeked of cheap cologne and secrets", "bar's shadows concealed faces and intentions", "rooftop offered no escape, only exposure"),
+    "character_intro", (a: "He adjusted his tie, eyes never leaving the door", "She pulled her coat tighter, gun heavy against her ribs", "The detective's lighter flicked open, illuminating nothing but doubt", "Smoke curled around the dancer as she waited", "His worn shoes carried the weight of too many dead ends"),
+    "moment_description", (a: "whispered name changed everything", "dropped lighter revealed the hidden message", "glint of steel caught in the darkness", "phone left off the hook transmitted secrets", "final glance conveyed both threat and promise"),
+    "dramatic_consequence", (a: "sealed both their fates", "revealed the betrayal too late", "set the final pieces in motion", "left questions that would never find answers", "confirmed what the case file only suggested"),
+    "noir_object", (a: "revolver", "cigarette", "lipstick-stained glass", "crumpled photograph", "torn playing card"),
+    "noir_action", (a: "felt heavy in his pocket", "burned down to his fingers", "caught the only light in the room", "contained answers nobody wanted", "marked the boundary between truth and lies"),
+    "character_pronoun", (a: "him", "her"),
+    "dramatic_reaction", (a: "freeze", "reach for the weapon", "accept the inevitable", "reconsider the whole case", "realize the setup"),
+    "noir_reflection", (a: "In this city, justice was just another bargaining chip", "The rain wouldn't wash away what happened tonight", "Dawn would bring consequences, but not clarity", "Some secrets were worth dying for; others, worth killing for", "The case would close, but the wounds never would")
+  ),
+  "romantic_dreamlike", (datamap:
+    "setting_descriptor", (a: "flower field swayed in gentle rhythm with the breeze", "rain traced delicate patterns down the window glass", "sunset painted the dock in impossible colors", "café's worn tables held a century of quiet conversations", "Parisian balcony overlooked a city that existed half in memory"),
+    "character_intro", (a: "she traced invisible patterns with her fingertips", "he searched the horizon for something unnamed", "their hands nearly touched, separated by mere molecules", "time seemed to pause around their silhouettes", "memories and possibilities collided in gentle waves"),
+    "emotion_description", (a: "hopeful longing", "gentle ache", "fleeting joy", "blooming warmth", "timeless yearning"),
+    "romantic_action", (a: "words formed and dissolved before reaching lips", "light captured moments that memory would preserve", "distance between them contained universes", "time slowed to accommodate the significance", "silence spoke volumes neither dared translate"),
+    "romantic_object", (a: "glance", "touch", "memory", "shared breath", "unspoken promise"),
+    "romantic_consequence", (a: "would linger long after they parted", "transformed something ordinary into significance", "became the gravity holding them in orbit", "revealed what had always been there", "offered possibilities neither had considered")
+  )
+  /* Add wordbanks for other themes */
+))
+
+(set: $generatedVignettes to (a:))
+
+:: Start
+# Procedural Vignette Generator
+
+Create unique vignettes from our theme elements:
+
+[[Generate Cinematic Noir Vignette->Generate:cinematic_noir]]
+[[Generate Romantic Dreamlike Vignette->Generate:romantic_dreamlike]]
+
+(if: (count: ...$generatedVignettes) > 0)[[View Your Generated Collection->View Collection]]
+
+:: Generate [script]
+(set: $theme to (split: passage name, ":") 's 2nd)
+
+/* Select random elements */
+(set: $characterType to (find: each _key, ...(datanames: (datamap: $themeData's $theme)), _key contains "Character" or _key contains "Persona" or _key contains "Figure" or _key contains "Icon" or _key contains "Human_Detail")'s 1st)
+(set: $settingType to (find: each _key, ...(datanames: (datamap: $themeData's $theme)), _key contains "Setting" or _key contains "Scene" or _key contains "Space" or _key contains "Era_Location" or _key contains "Urban_Texture")'s 1st)
+(set: $momentType to (find: each _key, ...(datanames: (datamap: $themeData's $theme)), _key contains "Moment" or _key contains "Emotion" or _key contains "Mood" or _key contains "Item_Trigger" or _key contains "Incident")'s 1st)
+
+(set: $character to ($themeData's $theme's $characterType)'s (random: 1, (count: ...($themeData's $theme's $characterType))))
+(set: $setting to ($themeData's $theme's $settingType)'s (random: 1, (count: ...($themeData's $theme's $settingType))))
+(set: $moment to ($themeData's $theme's $momentType)'s (random: 1, (count: ...($themeData's $theme's $momentType))))
+
+/* Choose a random template */
+(set: $template to ($templates's $theme)'s (random: 1, (count: ...($templates's $theme))))
+
+/* Fill in template with random words from wordbank */
+(set: $vignette to $template)
+(for: each _key, ...(datanames: (datamap: $wordBank's $theme)))[(set: $vignette to (replace: "$" + _key, ($wordBank's $theme's _key)'s (random: 1, (count: ...($wordBank's $theme's _key))), $vignette))]
+
+/* Save generated vignette */
+(set: $newVignette to (datamap: 
+  "theme", $theme,
+  "character", $character,
+  "setting", $setting,
+  "moment", $moment,
+  "text", $vignette
+))
+(set: $generatedVignettes to $generatedVignettes + (a: $newVignette))
+
+(goto: "View Generated Vignette")
+
+:: View Generated Vignette
+(set: $latest to $generatedVignettes's (count: ...$generatedVignettes))
+
+# {$latest's "character"} | {$latest's "setting"} | {$latest's "moment"}
+
+{$latest's "text"}
+
+---
+
+[[Generate Another {$latest's "theme"} Vignette->Generate:{$latest's "theme"}]]
+[[Return to Start->Start]]
+[[View Your Collection->View Collection]]
+
+:: View Collection
+# Your Generated Collection
+
+(for: each _vignette, ...$generatedVignettes)[
+## {_vignette's "character"} | {_vignette's "setting"} | {_vignette's "moment"}
+{_vignette's "text"}
+---
+]
+
+[[Generate More->Start]]
