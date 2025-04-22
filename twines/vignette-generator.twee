@@ -1,0 +1,256 @@
+:: StoryTitle
+Thematic Vignettes Explorer
+
+:: StoryData
+{
+  "ifid": "D674C58C-DEFA-4F70-B7A2-27742230C0FC",
+  "format": "Harlowe",
+  "format-version": "3.2.1",
+  "start": "Start",
+  "zoom": 1
+}
+
+:: Start
+# Thematic Vignettes Explorer
+
+Welcome to the Thematic Vignettes Explorer. Choose a thematic style to begin your journey:
+
+[[Cinematic Noir->Theme: Cinematic Noir]]
+[[Romantic Dreamlike->Theme: Romantic Dreamlike]]
+[[Moody Introspective->Theme: Moody Introspective]]
+[[Retro Nostalgic->Theme: Retro Nostalgic]]
+[[Gritty Real->Theme: Gritty Real]]
+
+:: Theme: Cinematic Noir
+(set: $selectedTheme to "cinematic_noir")
+
+# Cinematic Noir
+
+Choose a character:
+(link-repeat: "Private Eye")[(set: $selectedCharacter to "Private Eye")[[Select Setting->Cinematic Noir: Setting]]]
+(link-repeat: "Silent Dancer")[(set: $selectedCharacter to "Silent Dancer")[[Select Setting->Cinematic Noir: Setting]]]
+(link-repeat: "Street Hustler")[(set: $selectedCharacter to "Street Hustler")[[Select Setting->Cinematic Noir: Setting]]]
+(link-repeat: "Jazz Singer")[(set: $selectedCharacter to "Jazz Singer")[[Select Setting->Cinematic Noir: Setting]]]
+(link-repeat: "Detective")[(set: $selectedCharacter to "Detective")[[Select Setting->Cinematic Noir: Setting]]]
+
+[[Back->Start]]
+
+:: Cinematic Noir: Setting
+# Choose a setting:
+
+(link-repeat: "Foggy Alley")[(set: $selectedSetting to "Foggy Alley")[[Select Moment->Cinematic Noir: Moment]]]
+(link-repeat: "Neon Bar")[(set: $selectedSetting to "Neon Bar")[[Select Moment->Cinematic Noir: Moment]]]
+(link-repeat: "Rain-Slicked Street")[(set: $selectedSetting to "Rain-Slicked Street")[[Select Moment->Cinematic Noir: Moment]]]
+(link-repeat: "Motel Room")[(set: $selectedSetting to "Motel Room")[[Select Moment->Cinematic Noir: Moment]]]
+(link-repeat: "Rooftop Edge")[(set: $selectedSetting to "Rooftop Edge")[[Select Moment->Cinematic Noir: Moment]]]
+
+[[Back->Theme: Cinematic Noir]]
+
+:: Cinematic Noir: Moment
+# Choose a moment:
+
+(link-repeat: "Whispered Name")[(set: $selectedMoment to "Whispered Name")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Dropped Lighter")[(set: $selectedMoment to "Dropped Lighter")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Glint of Steel")[(set: $selectedMoment to "Glint of Steel")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Phone Off Hook")[(set: $selectedMoment to "Phone Off Hook")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Final Glance")[(set: $selectedMoment to "Final Glance")[[View Vignette->Vignette Viewer]]]
+
+[[Back->Cinematic Noir: Setting]]
+
+:: Theme: Romantic Dreamlike
+(set: $selectedTheme to "romantic_dreamlike")
+
+# Romantic Dreamlike
+
+Choose a persona:
+(link-repeat: "Stargazer")[(set: $selectedCharacter to "Stargazer")[[Select Scene->Romantic Dreamlike: Scene]]]
+(link-repeat: "Writer")[(set: $selectedCharacter to "Writer")[[Select Scene->Romantic Dreamlike: Scene]]]
+(link-repeat: "Painter")[(set: $selectedCharacter to "Painter")[[Select Scene->Romantic Dreamlike: Scene]]]
+(link-repeat: "Lover")[(set: $selectedCharacter to "Lover")[[Select Scene->Romantic Dreamlike: Scene]]]
+(link-repeat: "Stranger")[(set: $selectedCharacter to "Stranger")[[Select Scene->Romantic Dreamlike: Scene]]]
+
+[[Back->Start]]
+
+:: Romantic Dreamlike: Scene
+# Choose a scene:
+
+(link-repeat: "Flower Field")[(set: $selectedSetting to "Flower Field")[[Select Emotion->Romantic Dreamlike: Emotion]]]
+(link-repeat: "Rainy Window")[(set: $selectedSetting to "Rainy Window")[[Select Emotion->Romantic Dreamlike: Emotion]]]
+(link-repeat: "Sunset Dock")[(set: $selectedSetting to "Sunset Dock")[[Select Emotion->Romantic Dreamlike: Emotion]]]
+(link-repeat: "Old Café")[(set: $selectedSetting to "Old Café")[[Select Emotion->Romantic Dreamlike: Emotion]]]
+(link-repeat: "Paris Balcony")[(set: $selectedSetting to "Paris Balcony")[[Select Emotion->Romantic Dreamlike: Emotion]]]
+
+[[Back->Theme: Romantic Dreamlike]]
+
+:: Romantic Dreamlike: Emotion
+# Choose an emotion:
+
+(link-repeat: "Hopeful Longing")[(set: $selectedMoment to "Hopeful Longing")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Gentle Ache")[(set: $selectedMoment to "Gentle Ache")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Fleeting Joy")[(set: $selectedMoment to "Fleeting Joy")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Blooming Warmth")[(set: $selectedMoment to "Blooming Warmth")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Timeless Yearning")[(set: $selectedMoment to "Timeless Yearning")[[View Vignette->Vignette Viewer]]]
+
+[[Back->Romantic Dreamlike: Scene]]
+
+:: Theme: Moody Introspective
+(set: $selectedTheme to "moody_introspective")
+
+# Moody Introspective
+
+Choose a figure:
+(link-repeat: "Drifter")[(set: $selectedCharacter to "Drifter")[[Select Space->Moody Introspective: Space]]]
+(link-repeat: "Old Soul")[(set: $selectedCharacter to "Old Soul")[[Select Space->Moody Introspective: Space]]]
+(link-repeat: "Outsider")[(set: $selectedCharacter to "Outsider")[[Select Space->Moody Introspective: Space]]]
+(link-repeat: "Thinker")[(set: $selectedCharacter to "Thinker")[[Select Space->Moody Introspective: Space]]]
+(link-repeat: "Watcher")[(set: $selectedCharacter to "Watcher")[[Select Space->Moody Introspective: Space]]]
+
+[[Back->Start]]
+
+:: Moody Introspective: Space
+# Choose a space:
+
+(link-repeat: "Empty Lot")[(set: $selectedSetting to "Empty Lot")[[Select Mood->Moody Introspective: Mood]]]
+(link-repeat: "Dusty Library")[(set: $selectedSetting to "Dusty Library")[[Select Mood->Moody Introspective: Mood]]]
+(link-repeat: "Forest Path")[(set: $selectedSetting to "Forest Path")[[Select Mood->Moody Introspective: Mood]]]
+(link-repeat: "Overpass")[(set: $selectedSetting to "Overpass")[[Select Mood->Moody Introspective: Mood]]]
+(link-repeat: "Cracked Sidewalk")[(set: $selectedSetting to "Cracked Sidewalk")[[Select Mood->Moody Introspective: Mood]]]
+
+[[Back->Theme: Moody Introspective]]
+
+:: Moody Introspective: Mood
+# Choose a mood:
+
+(link-repeat: "Disconnection")[(set: $selectedMoment to "Disconnection")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Quiet Melancholy")[(set: $selectedMoment to "Quiet Melancholy")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Fading Light")[(set: $selectedMoment to "Fading Light")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Bitter Calm")[(set: $selectedMoment to "Bitter Calm")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Still Reflection")[(set: $selectedMoment to "Still Reflection")[[View Vignette->Vignette Viewer]]]
+
+[[Back->Moody Introspective: Space]]
+
+:: Theme: Retro Nostalgic
+(set: $selectedTheme to "retro_nostalgic")
+
+# Retro Nostalgic
+
+Choose an icon:
+(link-repeat: "Milkman")[(set: $selectedCharacter to "Milkman")[[Select Era Location->Retro Nostalgic: Era Location]]]
+(link-repeat: "Mod Girl")[(set: $selectedCharacter to "Mod Girl")[[Select Era Location->Retro Nostalgic: Era Location]]]
+(link-repeat: "Greaser")[(set: $selectedCharacter to "Greaser")[[Select Era Location->Retro Nostalgic: Era Location]]]
+(link-repeat: "Film Star")[(set: $selectedCharacter to "Film Star")[[Select Era Location->Retro Nostalgic: Era Location]]]
+(link-repeat: "War Bride")[(set: $selectedCharacter to "War Bride")[[Select Era Location->Retro Nostalgic: Era Location]]]
+
+[[Back->Start]]
+
+:: Retro Nostalgic: Era Location
+# Choose an era location:
+
+(link-repeat: "1950s Suburb")[(set: $selectedSetting to "1950s Suburb")[[Select Item Trigger->Retro Nostalgic: Item Trigger]]]
+(link-repeat: "60s Diner")[(set: $selectedSetting to "60s Diner")[[Select Item Trigger->Retro Nostalgic: Item Trigger]]]
+(link-repeat: "Drive-In")[(set: $selectedSetting to "Drive-In")[[Select Item Trigger->Retro Nostalgic: Item Trigger]]]
+(link-repeat: "Red Carpet")[(set: $selectedSetting to "Red Carpet")[[Select Item Trigger->Retro Nostalgic: Item Trigger]]]
+(link-repeat: "Train Station")[(set: $selectedSetting to "Train Station")[[Select Item Trigger->Retro Nostalgic: Item Trigger]]]
+
+[[Back->Theme: Retro Nostalgic]]
+
+:: Retro Nostalgic: Item Trigger
+# Choose an item trigger:
+
+(link-repeat: "Tin Lunchbox")[(set: $selectedMoment to "Tin Lunchbox")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Roller Skates")[(set: $selectedMoment to "Roller Skates")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Jukebox Tune")[(set: $selectedMoment to "Jukebox Tune")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Pocket Camera")[(set: $selectedMoment to "Pocket Camera")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Love Letter")[(set: $selectedMoment to "Love Letter")[[View Vignette->Vignette Viewer]]]
+
+[[Back->Retro Nostalgic: Era Location]]
+
+:: Theme: Gritty Real
+(set: $selectedTheme to "gritty_real")
+
+# Gritty Real
+
+Choose a human detail:
+(link-repeat: "Torn Hoodie")[(set: $selectedCharacter to "Torn Hoodie")[[Select Urban Texture->Gritty Real: Urban Texture]]]
+(link-repeat: "Bruised Knuckles")[(set: $selectedCharacter to "Bruised Knuckles")[[Select Urban Texture->Gritty Real: Urban Texture]]]
+(link-repeat: "Tight Grip")[(set: $selectedCharacter to "Tight Grip")[[Select Urban Texture->Gritty Real: Urban Texture]]]
+(link-repeat: "Cracked Smile")[(set: $selectedCharacter to "Cracked Smile")[[Select Urban Texture->Gritty Real: Urban Texture]]]
+(link-repeat: "Bent Posture")[(set: $selectedCharacter to "Bent Posture")[[Select Urban Texture->Gritty Real: Urban Texture]]]
+
+[[Back->Start]]
+
+:: Gritty Real: Urban Texture
+# Choose an urban texture:
+
+(link-repeat: "Brick Wall")[(set: $selectedSetting to "Brick Wall")[[Select Incident->Gritty Real: Incident]]]
+(link-repeat: "Chain-Link Fence")[(set: $selectedSetting to "Chain-Link Fence")[[Select Incident->Gritty Real: Incident]]]
+(link-repeat: "Scuffed Concrete")[(set: $selectedSetting to "Scuffed Concrete")[[Select Incident->Gritty Real: Incident]]]
+(link-repeat: "Rusted Sign")[(set: $selectedSetting to "Rusted Sign")[[Select Incident->Gritty Real: Incident]]]
+(link-repeat: "Flickering Lamp")[(set: $selectedSetting to "Flickering Lamp")[[Select Incident->Gritty Real: Incident]]]
+
+[[Back->Theme: Gritty Real]]
+
+:: Gritty Real: Incident
+# Choose an incident:
+
+(link-repeat: "Bike Crash")[(set: $selectedMoment to "Bike Crash")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Missed Shot")[(set: $selectedMoment to "Missed Shot")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Siren Echo")[(set: $selectedMoment to "Siren Echo")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Lost Wallet")[(set: $selectedMoment to "Lost Wallet")[[View Vignette->Vignette Viewer]]]
+(link-repeat: "Screamed Name")[(set: $selectedMoment to "Screamed Name")[[View Vignette->Vignette Viewer]]]
+
+[[Back->Gritty Real: Urban Texture]]
+
+:: Vignette Viewer
+(if: $selectedTheme is "cinematic_noir" and $selectedCharacter is "Private Eye" and $selectedSetting is "Motel Room" and $selectedMoment is "Dropped Lighter")[
+# Private Eye | Motel Room | Dropped Lighter
+
+The lighter clinked on tile, still warm. He didn't need the matchbook clue—it was her scent on the pillow that burned. The motel room whispered old lies with fresh breath. Cigarette smoke hung like a question mark. Outside, the case kept unfolding, but she'd already rewritten the ending.
+]
+
+(if: $selectedTheme is "cinematic_noir" and $selectedCharacter is "Detective" and $selectedSetting is "Foggy Alley" and $selectedMoment is "Glint of Steel")[
+# Detective | Foggy Alley | Glint of Steel
+
+The fog twisted around her ankles as she moved deeper into the alley. A distant flash—metal catching light. She froze, hand on her holster. Twenty years on the force taught her that steel in darkness rarely offered second chances.
+]
+
+(if: $selectedTheme is "romantic_dreamlike" and $selectedCharacter is "Painter" and $selectedSetting is "Sunset Dock" and $selectedMoment is "Fleeting Joy")[
+# Painter | Sunset Dock | Fleeting Joy
+
+She painted until the sun dipped low, each brushstroke pulling memories from the water's edge. He never returned, but the glow on the dock held his shape. The canvas dried with her smile—thin, unfinished. The joy, like light, touched everything briefly before fading into evening.
+]
+
+(if: $selectedTheme is "retro_nostalgic" and $selectedCharacter is "War Bride" and $selectedSetting is "Train Station" and $selectedMoment is "Love Letter")[
+# War Bride | Train Station | Love Letter
+
+She stood where he'd promised, the letter folded tight in her glove. Steam curled around her heels as the train departed again—empty. Each year, same place. She wasn't waiting for him anymore, not really. Only for the sound of wheels and the echo of paper words.
+]
+
+(if: $selectedTheme is "moody_introspective" and $selectedCharacter is "Drifter" and $selectedSetting is "Forest Path" and $selectedMoment is "Fading Light")[
+# Drifter | Forest Path | Fading Light
+
+He walked paths that never stayed the same. Each fork led deeper into the hush of trees, dusk dimming all directions. The light thinned like old film reels, catching on branches, slipping through. He never looked back; the forest, like his past, never gave him the option.
+]
+
+(if: $selectedTheme is "gritty_real" and $selectedCharacter is "Torn Hoodie" and $selectedSetting is "Brick Wall" and $selectedMoment is "Siren Echo")[
+# Torn Hoodie | Brick Wall | Siren Echo
+
+He sprinted past the mural, shoes hitting pavement like a drumline. Sirens tangled with city echoes, bouncing between alleys and broken bricks. His hoodie flapped, threadbare and real. Behind him, names were being shouted. Ahead, a single alley light flickered, no promise of safety—just another turn in the grid.
+]
+
+(if: (neither: 
+  ($selectedTheme is "cinematic_noir" and $selectedCharacter is "Private Eye" and $selectedSetting is "Motel Room" and $selectedMoment is "Dropped Lighter"),
+  ($selectedTheme is "cinematic_noir" and $selectedCharacter is "Detective" and $selectedSetting is "Foggy Alley" and $selectedMoment is "Glint of Steel"),
+  ($selectedTheme is "romantic_dreamlike" and $selectedCharacter is "Painter" and $selectedSetting is "Sunset Dock" and $selectedMoment is "Fleeting Joy"),
+  ($selectedTheme is "retro_nostalgic" and $selectedCharacter is "War Bride" and $selectedSetting is "Train Station" and $selectedMoment is "Love Letter"),
+  ($selectedTheme is "moody_introspective" and $selectedCharacter is "Drifter" and $selectedSetting is "Forest Path" and $selectedMoment is "Fading Light"),
+  ($selectedTheme is "gritty_real" and $selectedCharacter is "Torn Hoodie" and $selectedSetting is "Brick Wall" and $selectedMoment is "Siren Echo")
+))[
+# $selectedCharacter | $selectedSetting | $selectedMoment
+
+*This combination doesn't have a written vignette yet. Choose another combination or create your own narrative in your mind.*
+
+*What might this scene look like? What story could unfold here?*
+]
+
+[[Try another combination->Start]]
